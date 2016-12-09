@@ -153,4 +153,16 @@ public class DiggerClient {
     return this.build(jobName, DEFAULT_BUILD_TIMEOUT);
   }
 
+  /**
+   * Fetch artifacts urls for specific job and build number
+   *
+   * @param jobName name of the job
+   * @param buildNumber job build number
+   * @param artifactName - name of the artifact to fetch - can be regexp
+   * @return InputStream with file contents
+   */
+  public InputStream fetchArtifact(String jobName, long buildNumber, String artifactName) {
+    ArtifactsService artifactsService = new ArtifactsService(jenkins);
+    return artifactsService.fetchArtifact(jobName,buildNumber,artifactName);
+  }
 }
