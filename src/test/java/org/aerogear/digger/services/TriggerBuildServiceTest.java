@@ -1,11 +1,11 @@
-package com.redhat.digkins.services;
+package org.aerogear.digger.services;
 
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.Executable;
 import com.offbytwo.jenkins.model.JobWithDetails;
 import com.offbytwo.jenkins.model.QueueItem;
 import com.offbytwo.jenkins.model.QueueReference;
-import com.redhat.digkins.model.BuildStatus;
+import org.aerogear.digger.model.BuildStatus;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

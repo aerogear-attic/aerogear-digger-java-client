@@ -1,8 +1,8 @@
-package com.redhat.digkins;
+package org.aerogear.digger;
 
-import com.redhat.digkins.services.JobService;
-import com.redhat.digkins.services.TriggerBuildService;
-import com.redhat.digkins.util.DiggerClientException;
+import org.aerogear.digger.services.JobService;
+import org.aerogear.digger.services.TriggerBuildService;
+import org.aerogear.digger.util.DiggerClientException;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;

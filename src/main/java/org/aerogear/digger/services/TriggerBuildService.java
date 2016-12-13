@@ -1,11 +1,12 @@
-package com.redhat.digkins.services;
+package org.aerogear.digger.services;
 
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.Executable;
 import com.offbytwo.jenkins.model.JobWithDetails;
 import com.offbytwo.jenkins.model.QueueItem;
 import com.offbytwo.jenkins.model.QueueReference;
-import com.redhat.digkins.model.BuildStatus;
+import org.aerogear.digger.DiggerClient;
+import org.aerogear.digger.model.BuildStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +43,7 @@ public class TriggerBuildService {
   }
 
   /**
-   * See the documentation in {@link com.redhat.digkins.DiggerClient#build(String, long)}
+   * See the documentation in {@link DiggerClient#build(String, long)}
    *
    * @param jenkinsServer Jenkins server client
    * @param jobName       name of the job
@@ -50,7 +51,7 @@ public class TriggerBuildService {
    * @return the build status
    * @throws IOException          if connection problems occur during connecting to Jenkins
    * @throws InterruptedException if a problem occurs during sleeping between checks
-   * @see com.redhat.digkins.DiggerClient#build(String, long)
+   * @see DiggerClient#build(String, long)
    */
   public BuildStatus build(JenkinsServer jenkinsServer, String jobName, long timeout) throws IOException, InterruptedException {
     final long whenToTimeout = System.currentTimeMillis() + timeout;

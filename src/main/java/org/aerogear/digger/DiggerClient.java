@@ -1,12 +1,12 @@
-package com.redhat.digkins;
+package org.aerogear.digger;
 
 import com.offbytwo.jenkins.JenkinsServer;
-import com.redhat.digkins.model.BuildStatus;
-import com.redhat.digkins.services.ArtifactsService;
-import com.redhat.digkins.services.JobService;
-import com.redhat.digkins.services.TriggerBuildService;
-import com.redhat.digkins.util.DiggerClientException;
-import com.redhat.digkins.util.JenkinsAuth;
+import org.aerogear.digger.model.BuildStatus;
+import org.aerogear.digger.services.ArtifactsService;
+import org.aerogear.digger.services.JobService;
+import org.aerogear.digger.services.TriggerBuildService;
+import org.aerogear.digger.util.DiggerClientException;
+import org.aerogear.digger.util.JenkinsAuth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
