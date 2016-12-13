@@ -1,7 +1,12 @@
 package org.aerogear.digger.services;
 
 import com.offbytwo.jenkins.JenkinsServer;
-import com.offbytwo.jenkins.model.*;
+import com.offbytwo.jenkins.model.Build;
+import com.offbytwo.jenkins.model.BuildWithDetails;
+import com.offbytwo.jenkins.model.Executable;
+import com.offbytwo.jenkins.model.JobWithDetails;
+import com.offbytwo.jenkins.model.QueueItem;
+import com.offbytwo.jenkins.model.QueueReference;
 import org.aerogear.digger.DiggerClient;
 import org.aerogear.digger.model.BuildStatus;
 import org.aerogear.digger.util.DiggerClientException;
@@ -45,8 +50,8 @@ public class BuildService {
   /**
    * Get build logs for specific job and build number
    *
-   * @param jobName      name of the job
-   * @param buildNumber  job build number
+   * @param jobName     name of the job
+   * @param buildNumber job build number
    * @return String with file contents that can be saved or piped to socket
    * @throws DiggerClientException when problem with fetching artifacts from jenkins
    */
