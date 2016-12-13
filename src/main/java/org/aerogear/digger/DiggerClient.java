@@ -195,4 +195,16 @@ public class DiggerClient {
   public void saveArtifact(String jobName, int buildNumber, String artifactName, File outputFile) throws DiggerClientException, IOException {
       artifactsService.saveArtifact(jenkinsServer,jobName, buildNumber, artifactName,outputFile);
   }
+
+  /**
+   * Get build logs for specific job and build number
+   *
+   * @param jobName      name of the job
+   * @param buildNumber  job build number
+   * @return String with file contents that can be saved or piped to socket
+   * @throws DiggerClientException when problem with fetching artifacts from jenkins
+   */
+  public String getBuildLogs(String jobName, int buildNumber) throws DiggerClientException {
+      return buildService.getBuildLogs(jenkinsServer,jobName,buildNumber);
+  }
 }
