@@ -15,9 +15,9 @@ import java.io.IOException;
 /**
  * Provides functionality to trigger a build.
  **/
-public class TriggerBuildService {
+public class BuildService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(TriggerBuildService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BuildService.class);
 
   /**
    * Default value of {@link #firstCheckDelay}
@@ -37,7 +37,7 @@ public class TriggerBuildService {
    * @param firstCheckDelay how long should we wait (in milliseconds) before we start checking the queue item status
    * @param pollPeriod      how long should we wait (in milliseconds) before checking the queue item status for next time
    */
-  public TriggerBuildService(long firstCheckDelay, long pollPeriod) {
+  public BuildService(long firstCheckDelay, long pollPeriod) {
     this.firstCheckDelay = firstCheckDelay;
     this.pollPeriod = pollPeriod;
   }

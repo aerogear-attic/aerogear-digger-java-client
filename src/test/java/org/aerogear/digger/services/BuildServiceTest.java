@@ -17,9 +17,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 @RunWith(MockitoJUnitRunner.class)
-public class TriggerBuildServiceTest {
+public class BuildServiceTest {
 
-  private TriggerBuildService service;
+  private BuildService service;
 
   @Mock
   JenkinsServer jenkinsServer;
@@ -31,7 +31,7 @@ public class TriggerBuildServiceTest {
 
   @Before
   public void setUp() throws Exception {
-    service = new TriggerBuildService(300, 50);   // wait for 300 msecs for initial build, check every 50 msecs
+    service = new BuildService(300, 50);   // wait for 300 msecs for initial build, check every 50 msecs
 
     Mockito.when(jenkinsServer.getJob("TEST")).thenReturn(mockJob);
   }
