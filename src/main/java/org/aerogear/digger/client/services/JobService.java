@@ -19,8 +19,14 @@ import org.aerogear.digger.client.model.BuildParameter;
 
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.JobWithDetails;
+import com.offbytwo.jenkins.model.credentials.Credential;
+import org.aerogear.digger.client.util.DiggerClientException;
+import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.jtwig.JtwigModel;
 import org.jtwig.JtwigTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -31,9 +37,12 @@ import java.util.List;
 public class JobService {
 
     private final static String GIT_REPO_URL = "GIT_REPO_URL";
+    private final static String GIT_CREDENTIALS_ID = "GIT_CREDENTIALS_ID";
     private final static String GIT_REPO_BRANCH = "GIT_REPO_BRANCH";
     private final static String BUILD_PARAMETERS = "BUILD_PARAMETERS";
     private static final String JOB_TEMPLATE_PATH = "templates/job.xml";
+
+    private static final Logger LOG = LoggerFactory.getLogger(JobService.class);
 
     /**
      * Get a digger job on jenkins platform.
@@ -54,15 +63,24 @@ public class JobService {
      * @param name            job name that can be used later to reference job
      * @param gitRepo         git repository url (full git repository url. e.g git@github.com:digger/helloworld.git
      * @param gitBranch       git repository branch (default branch used to checkout source code)
+     * @param gitRepoCredential credential instance. See {@link Credential}.
      * @param buildParameters list of build parameters for the a parameterized job.
+     *
      * @throws IOException
      */
-    public void create(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch, List<BuildParameter> buildParameters) throws IOException {
+    public void create(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch, Credential gitRepoCredential, List<BuildParameter> buildParameters) throws IOException {
+        String credentialId = null;
+        if (gitRepoCredential != null) {
+            credentialId = getCredentialId(name, gitRepoCredential);
+            updateCredential(jenkinsServer, credentialId, gitRepoCredential);
+        }
+
         JtwigTemplate template = JtwigTemplate.classpathTemplate(JOB_TEMPLATE_PATH);
         JtwigModel model = JtwigModel.newModel()
             .with(GIT_REPO_URL, gitRepo)
             .with(GIT_REPO_BRANCH, gitBranch)
-            .with(BUILD_PARAMETERS, buildParameters);
+            .with(BUILD_PARAMETERS, buildParameters)
+            .with(GIT_CREDENTIALS_ID, credentialId);
         jenkinsServer.createJob(name, template.render(model));
     }
 
@@ -74,27 +92,36 @@ public class JobService {
      * @param gitRepo       git repository url (full git repository url. e.g git@github.com:digger/helloworld.git
      * @param gitBranch     git repository branch (default branch used to checkout source code)
      * @throws IOException
-     * @see #create(JenkinsServer, String, String, String, List)
+     * @see #create(JenkinsServer, String, String, String, Credential, List)
      */
     public void create(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch) throws IOException {
-        this.create(jenkinsServer, name, gitRepo, gitBranch, null);
+        this.create(jenkinsServer, name, gitRepo, gitBranch, null, null);
     }
 
     /**
-     * Update digger job ob jenkins platform.
+     * Update digger job on jenkins platform.
+     * NOTE: If gitRepoCredential is set in #create(JenkinsServer, String, String, String, List, Credential), it needs to be set in here as well. Otherwise it will be removed.
      *
      * @param jenkinsServer   Jenkins server client
      * @param name            job name that can be used later to reference job
      * @param gitRepo         git repository url (full git repository url. e.g git@github.com:digger/helloworld.git
      * @param gitBranch       git repository branch (default branch used to checkout source code)
+     * @param gitRepoCredential credential instance. See {@link Credential}.
      * @param buildParameters list of build parameters for the a parameterized job.
      */
-    public void update(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch, List<BuildParameter> buildParameters) throws IOException {
+    public void update(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch, Credential gitRepoCredential, List<BuildParameter> buildParameters) throws IOException {
+        String credentialId = null;
+        if (gitRepoCredential != null) {
+            credentialId = getCredentialId(name, gitRepoCredential);
+            updateCredential(jenkinsServer, credentialId, gitRepoCredential);
+        }
+
         JtwigTemplate template = JtwigTemplate.classpathTemplate(JOB_TEMPLATE_PATH);
         JtwigModel model = JtwigModel.newModel()
             .with(GIT_REPO_URL, gitRepo)
             .with(GIT_REPO_BRANCH, gitBranch)
-            .with(BUILD_PARAMETERS, buildParameters);
+            .with(BUILD_PARAMETERS, buildParameters)
+            .with(GIT_CREDENTIALS_ID, credentialId);
         jenkinsServer.updateJob(name, template.render(model));
     }
 
@@ -106,9 +133,51 @@ public class JobService {
      * @param gitRepo       git repository url (full git repository url. e.g git@github.com:digger/helloworld.git
      * @param gitBranch     git repository branch (default branch used to checkout source code)
      * @throws IOException
-     * @see #update(JenkinsServer, String, String, String, List)
+     * @see #update(JenkinsServer, String, String, String, Credential, List)
      */
     public void update(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch) throws IOException {
-        this.update(jenkinsServer, name, gitRepo, gitBranch, null);
+        this.update(jenkinsServer, name, gitRepo, gitBranch, null, null);
+    }
+
+
+    /**
+     * Get the id of the given credential. If it's set on the given gitRepoCredential instance, it will be returned.
+     * Otherwise an id will be generated based on the jenkins job name.
+     *
+     * @param jobName the name of the jenkins job
+     * @param gitRepoCredential the credential instance.
+     * @return the credential id.
+     */
+    private String getCredentialId(String jobName, Credential gitRepoCredential) {
+        String credentialId = null;
+        if (StringUtils.isEmpty(gitRepoCredential.getId())) {
+            credentialId = String.format("%s-%s", jobName, "gitRepoCredential");
+        } else {
+            credentialId = gitRepoCredential.getId();
+        }
+        return credentialId;
+    }
+
+    /**
+     * Update the credential in Jenkins.
+     * @param jenkinsServer the jenkins server instance
+     * @param credentialId the id of the credential
+     * @param gitRepoCredential the new credential instance.
+     * @throws IOException
+     */
+    private void updateCredential(JenkinsServer jenkinsServer, String credentialId, Credential gitRepoCredential) throws IOException {
+        gitRepoCredential.setId(credentialId);
+        try {
+            //remove the credential first, in case the credential value changed.
+            try {
+                jenkinsServer.deleteCredential(credentialId, false);
+            } catch (Exception e) {
+                LOG.warn("Can not delete credential with id " + credentialId + ". It might not exist.", e);
+            }
+            jenkinsServer.createCredential(gitRepoCredential, false);
+        } catch (IOException ioe) {
+            LOG.error("Creating credential failed with error", ioe);
+            throw ioe;
+        }
     }
 }
