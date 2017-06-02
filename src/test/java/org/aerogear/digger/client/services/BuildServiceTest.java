@@ -17,8 +17,10 @@ package org.aerogear.digger.client.services;
 
 import com.google.common.collect.Lists;
 import com.offbytwo.jenkins.JenkinsServer;
+import com.offbytwo.jenkins.helper.BuildConsoleStreamListener;
 import com.offbytwo.jenkins.model.*;
 import org.aerogear.digger.client.model.BuildTriggerStatus;
+import org.aerogear.digger.client.model.LogStreamingOptions;
 import org.aerogear.digger.client.util.DiggerClientException;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
@@ -199,6 +202,33 @@ public class BuildServiceTest {
         assertThat(detailsList).hasSize(2);
         assertThat(detailsList.get(0)).isSameAs(buildDetails1);
         assertThat(detailsList.get(1)).isSameAs(buildDetails2);
+    }
+
+
+    @Test
+    public void shouldStreamBuildLogs() throws Exception {
+        JobWithDetails job = mock(JobWithDetails.class);
+        Build build = mock(Build.class);
+        BuildWithDetails buildDetails = mock(BuildWithDetails.class);
+
+        when(jenkinsServer.getJob(anyString())).thenReturn(job);
+        when(job.getBuildByNumber(anyInt())).thenReturn(build);
+        when(build.details()).thenReturn(buildDetails);
+
+        LogStreamingOptions options = new LogStreamingOptions(new BuildConsoleStreamListener() {
+            @Override
+            public void onData(String s) {
+
+            }
+
+            @Override
+            public void finished() {
+
+            }
+        });
+
+        service.streamBuildLogs(jenkinsServer, "some-job", 1, options);
+        verify(buildDetails).streamConsoleOutput(options.getStreamListener(), options.getPollingInterval(), options.getPollingTimeout());
     }
 
 }

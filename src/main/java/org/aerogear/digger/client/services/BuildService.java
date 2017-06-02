@@ -20,6 +20,7 @@ import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.*;
 import org.aerogear.digger.client.DiggerClient;
 import org.aerogear.digger.client.model.BuildTriggerStatus;
+import org.aerogear.digger.client.model.LogStreamingOptions;
 import org.aerogear.digger.client.util.DiggerClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -204,7 +205,7 @@ public class BuildService {
             }
         }
     }
-
+    
     /**
      * See the documentation in {@link DiggerClient#build(String, long)}
      *
@@ -218,5 +219,39 @@ public class BuildService {
      */
     public BuildTriggerStatus build(JenkinsServer jenkinsServer, String jobName, long timeout) throws IOException, InterruptedException {
         return this.build(jenkinsServer, jobName, timeout, null);
+    }
+
+    /**
+     * Get the build details of a job
+     *
+     * @param jenkins the jenkins instance
+     * @param jobName the name of the job
+     * @param buildNumber the build number
+     * @return {@link BuildWithDetails}
+     * @throws DiggerClientException
+     */
+    public BuildWithDetails getBuildDetails(JenkinsServer jenkins, String jobName, int buildNumber) throws DiggerClientException {
+        try {
+            JobWithDetails job = jenkins.getJob(jobName);
+            if (job == null) {
+                LOG.error("Cannot fetch job from jenkins {0}", jobName);
+                throw new DiggerClientException("Cannot fetch job from jenkins");
+            }
+            Build build = job.getBuildByNumber(buildNumber);
+            BuildWithDetails buildWithDetails = build.details();
+            return buildWithDetails;
+        } catch (IOException e) {
+            LOG.error("Problem when fetching logs for {0} {1}", jobName, buildNumber, e);
+            throw new DiggerClientException(e);
+        }
+    }
+
+    /**
+     * Start streaming the logs of the given build.
+     * See {@link DiggerClient#streamLogs(String, int, LogStreamingOptions)}
+     */
+    public void streamBuildLogs(JenkinsServer jenkins, String jobName, int buildNumber, LogStreamingOptions options) throws DiggerClientException, IOException, InterruptedException {
+        BuildWithDetails buildDetails = this.getBuildDetails(jenkins, jobName, buildNumber);
+        buildDetails.streamConsoleOutput(options.getStreamListener(), options.getPollingInterval(), options.getPollingTimeout());
     }
 }
