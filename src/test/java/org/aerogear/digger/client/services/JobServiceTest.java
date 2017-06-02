@@ -30,7 +30,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
-public class JobServiceTests {
+public class JobServiceTest {
 
     @Mock
     private JenkinsServer server;

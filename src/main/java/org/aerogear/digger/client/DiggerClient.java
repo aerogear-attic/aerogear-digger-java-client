@@ -19,6 +19,7 @@ import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.BuildWithDetails;
 import com.offbytwo.jenkins.model.JobWithDetails;
 import org.aerogear.digger.client.model.BuildTriggerStatus;
+import org.aerogear.digger.client.model.BuildParameter;
 import org.aerogear.digger.client.services.ArtifactsService;
 import org.aerogear.digger.client.services.BuildService;
 import org.aerogear.digger.client.services.JobService;
@@ -33,6 +34,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
+import java.util.Collections;
 
 /**
  * Digger Java Client interact with Digger Jenkins api.
@@ -137,6 +140,23 @@ public class DiggerClient {
     }
 
     /**
+     * Create new parameterized Digger job on Jenkins platform
+     *
+     * @param name            job name that can be used later to reference job
+     * @param gitRepo         git repository url (full git repository url. e.g git@github.com:wtrocki/helloworld-android-gradle.git
+     * @param gitBranch       git repository branch (default branch used to checkout source code)
+     * @param buildParameters list of parameters for a Jenkins parameterized build.
+     * @throws DiggerClientException if something goes wrong
+     */
+    public void createJob(String name, String gitRepo, String gitBranch, List<BuildParameter> buildParameters) throws DiggerClientException {
+        try {
+            jobService.create(this.jenkinsServer, name, gitRepo, gitBranch, buildParameters);
+        } catch (Throwable e) {
+            throw new DiggerClientException(e);
+        }
+    }
+
+    /**
      * Triggers a build for the given job and waits until it leaves the queue and actually starts.
      * <p>
      * Jenkins puts the build requests in a queue and once there is a slave available, it starts building
@@ -154,12 +174,13 @@ public class DiggerClient {
      * @param jobName name of the job to trigger the build
      * @param timeout how many milliseconds should this call block before returning {@link BuildTriggerStatus.State#TIMED_OUT}.
      *                Should be larger than {@link BuildService#DEFAULT_FIRST_CHECK_DELAY}
+     * @param params build parameters to be sent to the Jenkins build
      * @return the build status
      * @throws DiggerClientException if connection problems occur during connecting to Jenkins
      */
-    public BuildTriggerStatus build(String jobName, long timeout) throws DiggerClientException {
+    public BuildTriggerStatus build(String jobName, long timeout, Map<String, String> params) throws DiggerClientException {
         try {
-            return buildService.build(this.jenkinsServer, jobName, timeout);
+            return buildService.build(this.jenkinsServer, jobName, timeout, params);
         } catch (IOException e) {
             LOG.debug("Exception while connecting to Jenkins", e);
             throw new DiggerClientException(e);
@@ -175,7 +196,23 @@ public class DiggerClient {
     /**
      * Triggers a build for the given job and waits until it leaves the queue and actually starts.
      * <p>
-     * Calls {@link #build(String, long)} with a default timeout of {@link #DEFAULT_BUILD_TIMEOUT}.
+     * Calls {@link #build(String, long, Map)} with a default timeout of {@link #DEFAULT_BUILD_TIMEOUT} and no build parameters.
+     *
+     * @param jobName name of the job
+     * @param timeout how many milliseconds should this call block before returning {@link BuildTriggerStatus.State#TIMED_OUT}.
+     *                Should be larger than {@link BuildService#DEFAULT_FIRST_CHECK_DELAY}
+     * @return the build status
+     * @throws DiggerClientException if connection problems occur during connecting to Jenkins
+     * @see #build(String, long)
+     */
+    public BuildTriggerStatus build(String jobName, long timeout) throws DiggerClientException {
+        return this.build(jobName, timeout, Collections.<String, String>emptyMap());
+    }
+
+    /**
+     * Triggers a build for the given job and waits until it leaves the queue and actually starts.
+     * <p>
+     * Calls {@link #build(String, long, Map)} with a default timeout of {@link #DEFAULT_BUILD_TIMEOUT} and no build parameters.
      *
      * @param jobName name of the job
      * @return the build status
@@ -183,7 +220,7 @@ public class DiggerClient {
      * @see #build(String, long)
      */
     public BuildTriggerStatus build(String jobName) throws DiggerClientException {
-        return this.build(jobName, DEFAULT_BUILD_TIMEOUT);
+        return this.build(jobName, DEFAULT_BUILD_TIMEOUT, Collections.<String, String>emptyMap());
     }
 
     /**

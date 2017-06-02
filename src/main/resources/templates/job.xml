@@ -2,6 +2,19 @@
     <description/>
     <keepDependencies>false</keepDependencies>
     <properties>
+        {% if (BUILD_PARAMETERS is defined) %}
+            <hudson.model.ParametersDefinitionProperty>
+                <parameterDefinitions>
+                    {% for parameter in BUILD_PARAMETERS %}
+                        <hudson.model.StringParameterDefinition>
+                            <name>{{ parameter.name }}</name>
+                            <description>{{ parameter.description }}</description>
+                            <defaultValue>{{ parameter.defaultValue }}</defaultValue>
+                        </hudson.model.StringParameterDefinition>
+                    {% endfor %}
+                </parameterDefinitions>
+            </hudson.model.ParametersDefinitionProperty>
+        {% endif %}
         <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
             <triggers/>
         </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
