@@ -2,7 +2,7 @@
     <description/>
     <keepDependencies>false</keepDependencies>
     <properties>
-        {% if (BUILD_PARAMETERS is defined) %}
+        {% if BUILD_PARAMETERS %}
             <hudson.model.ParametersDefinitionProperty>
                 <parameterDefinitions>
                     {% for parameter in BUILD_PARAMETERS %}

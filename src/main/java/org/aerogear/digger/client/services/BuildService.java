@@ -15,6 +15,7 @@
  */
 package org.aerogear.digger.client.services;
 
+import org.apache.commons.collections4.MapUtils;
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.*;
 import org.aerogear.digger.client.DiggerClient;
@@ -147,7 +148,7 @@ public class BuildService {
             throw new IllegalArgumentException("Unable to find job for name '" + jobName + "'");
         }
 
-        final QueueReference queueReference = params == null ? job.build() : job.build(params);
+        final QueueReference queueReference = MapUtils.isEmpty(params) ? job.build() : job.build(params);
         if (queueReference == null) {
             // this is probably an implementation problem we have here
             LOG.debug("Queue reference cannot be null!");

@@ -157,7 +157,7 @@ public class DiggerClient {
     }
 
     /**
-     * Create new Digger job on Jenkins platform
+     * Update a Digger job on Jenkins platform
      *
      * @param name      job name that can be used later to reference job
      * @param gitRepo   git repository url (full git repository url. e.g git@github.com:wtrocki/helloworld-android-gradle.git
@@ -195,9 +195,9 @@ public class DiggerClient {
      * @param name name of the job to get
      * @throws DiggerClientException if something goes wrong
      */
-     public void getJob(String name) throws DiggerClientException {
+     public JobWithDetails getJob(String name) throws DiggerClientException {
         try {
-            jobService.get(this.jenkinsServer, name);
+            return jobService.get(this.jenkinsServer, name);
         } catch (Throwable e) {
             throw new DiggerClientException(e);
         }
