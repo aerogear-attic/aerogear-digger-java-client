@@ -157,6 +157,53 @@ public class DiggerClient {
     }
 
     /**
+     * Create new Digger job on Jenkins platform
+     *
+     * @param name      job name that can be used later to reference job
+     * @param gitRepo   git repository url (full git repository url. e.g git@github.com:wtrocki/helloworld-android-gradle.git
+     * @param gitBranch git repository branch (default branch used to checkout source code)
+     * @throws DiggerClientException if something goes wrong
+     */
+    public void updateJob(String name, String gitRepo, String gitBranch) throws DiggerClientException {
+        try {
+            jobService.update(this.jenkinsServer, name, gitRepo, gitBranch);
+        } catch (Throwable e) {
+            throw new DiggerClientException(e);
+        }
+    }
+
+    /**
+     * Update parameterized Digger job on Jenkins platform.
+     *
+     * @param name            job name that can be used later to reference job
+     * @param gitRepo         git repository url (full git repository url. e.g git@github.com:wtrocki/helloworld-android-gradle.git
+     * @param gitBranch       git repository branch (default branch used to checkout source code)
+     * @param buildParameters list of parameters for a Jenkins parameterized build.
+     * @throws DiggerClientException if something goes wrong
+     */
+    public void updateJob(String name, String gitRepo, String gitBranch, List<BuildParameter> buildParameters) throws DiggerClientException {
+        try {
+            jobService.update(this.jenkinsServer, name, gitRepo, gitBranch, buildParameters);
+        } catch (Throwable e) {
+            throw new DiggerClientException(e);
+        }
+    }
+
+    /**
+     * Get a Digger job on the Jenkins platform. Null if not found.
+     *
+     * @param name name of the job to get
+     * @throws DiggerClientException if something goes wrong
+     */
+     public void getJob(String name) throws DiggerClientException {
+        try {
+            jobService.get(this.jenkinsServer, name);
+        } catch (Throwable e) {
+            throw new DiggerClientException(e);
+        }
+     }
+
+    /**
      * Triggers a build for the given job and waits until it leaves the queue and actually starts.
      * <p>
      * Jenkins puts the build requests in a queue and once there is a slave available, it starts building
