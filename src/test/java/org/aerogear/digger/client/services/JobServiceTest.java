@@ -30,7 +30,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
-public class JobServiceTests {
+public class JobServiceTest {
 
     @Mock
     private JenkinsServer server;
@@ -51,4 +51,21 @@ public class JobServiceTests {
         verify(server, times(1)).createJob(anyString(), anyString());
     }
 
+    @Test
+    public void shouldUpdateJob() throws Exception {
+        JobWithDetails job = mock(JobWithDetails.class);
+        BuildWithDetails build = mock(BuildWithDetails.class);
+        when(job.getBuildByNumber(anyInt())).thenReturn(build);
+        when(build.details()).thenReturn(build);
+        jobService.update(server, "name", "repo", "branch");
+        verify(server, times(1)).updateJob(anyString(), anyString());
+    }
+
+    @Test
+    public void shouldGetJob() throws Exception {
+        JobWithDetails job = mock(JobWithDetails.class);
+        BuildWithDetails build = mock(BuildWithDetails.class);
+        jobService.get(server, "name");
+        verify(server, times(1)).getJob(anyString());
+    }
 }

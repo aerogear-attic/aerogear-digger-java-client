@@ -15,6 +15,7 @@
  */
 package org.aerogear.digger.client.services;
 
+import org.apache.commons.collections4.MapUtils;
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.*;
 import org.aerogear.digger.client.DiggerClient;
@@ -25,7 +26,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -122,17 +125,18 @@ public class BuildService {
     }
 
     /**
-     * See the documentation in {@link DiggerClient#build(String, long)}
+     * See the documentation in {@link DiggerClient#build(String, long, Map)}
      *
      * @param jenkinsServer Jenkins server client
      * @param jobName       name of the job
      * @param timeout       timeout
+     * @param params        build parameters to override defaults in the job
      * @return the build status
      * @throws IOException          if connection problems occur during connecting to Jenkins
      * @throws InterruptedException if a problem occurs during sleeping between checks
-     * @see DiggerClient#build(String, long)
+     * @see DiggerClient#build(String, long, Map)
      */
-    public BuildTriggerStatus build(JenkinsServer jenkinsServer, String jobName, long timeout) throws IOException, InterruptedException {
+    public BuildTriggerStatus build(JenkinsServer jenkinsServer, String jobName, long timeout, Map<String, String> params) throws IOException, InterruptedException {
         final long whenToTimeout = System.currentTimeMillis() + timeout;
 
         LOG.debug("Going to build job with name: {}", jobName);
@@ -144,7 +148,7 @@ public class BuildService {
             throw new IllegalArgumentException("Unable to find job for name '" + jobName + "'");
         }
 
-        final QueueReference queueReference = job.build();
+        final QueueReference queueReference = MapUtils.isEmpty(params) ? job.build() : job.build(params);
         if (queueReference == null) {
             // this is probably an implementation problem we have here
             LOG.debug("Queue reference cannot be null!");
@@ -199,5 +203,20 @@ public class BuildService {
                 }
             }
         }
+    }
+
+    /**
+     * See the documentation in {@link DiggerClient#build(String, long)}
+     *
+     * @param jenkinsServer Jenkins server client
+     * @param jobName       name of the job
+     * @param timeout       timeout
+     * @return the build status
+     * @throws IOException          if connection problems occur during connecting to Jenkins
+     * @throws InterruptedException if a problem occurs during sleeping between checks
+     * @see DiggerClient#build(String, long)
+     */
+    public BuildTriggerStatus build(JenkinsServer jenkinsServer, String jobName, long timeout) throws IOException, InterruptedException {
+        return this.build(jenkinsServer, jobName, timeout, null);
     }
 }
