@@ -20,6 +20,7 @@ import com.offbytwo.jenkins.model.BuildWithDetails;
 import com.offbytwo.jenkins.model.JobWithDetails;
 import org.aerogear.digger.client.model.BuildTriggerStatus;
 import org.aerogear.digger.client.model.BuildParameter;
+import org.aerogear.digger.client.model.LogStreamingOptions;
 import org.aerogear.digger.client.services.ArtifactsService;
 import org.aerogear.digger.client.services.BuildService;
 import org.aerogear.digger.client.services.JobService;
@@ -321,5 +322,19 @@ public class DiggerClient {
      */
     public List<BuildWithDetails> getBuildHistory(String jobName) throws DiggerClientException {
         return buildService.getBuildHistory(jenkinsServer, jobName);
+    }
+
+    /**
+     * Streaming the build logs.
+     *
+     * @param jobName the job name
+     * @param buildNumber the build number
+     * @param options See {@link LogStreamingOptions}
+     * @throws DiggerClientException
+     * @throws InterruptedException
+     * @throws IOException
+     */
+    public void streamLogs(String jobName, int buildNumber, LogStreamingOptions options) throws DiggerClientException, InterruptedException, IOException {
+        buildService.streamBuildLogs(jenkinsServer, jobName, buildNumber, options);
     }
 }
