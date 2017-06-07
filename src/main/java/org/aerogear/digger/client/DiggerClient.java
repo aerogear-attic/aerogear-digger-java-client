@@ -342,4 +342,19 @@ public class DiggerClient {
     public void streamLogs(String jobName, int buildNumber, LogStreamingOptions options) throws DiggerClientException, InterruptedException, IOException {
         buildService.streamBuildLogs(jenkinsServer, jobName, buildNumber, options);
     }
+
+    /**
+     * Delete the job from Jenkins server.
+     *
+     * @param jobName the name of the job to delete.
+     * @param credentialId the id of the credential to delete. It should be the same id value if gitRepoCredential is provided in #createJob(String, String, String, Credential, List) and it has an id value. Otherwise pass null.
+     * @throws DiggerClientException
+     */
+    public void deleteJob(String jobName, String credentialId) throws DiggerClientException {
+        try {
+            jobService.delete(jenkinsServer, jobName, credentialId);
+        } catch(IOException ioe) {
+            throw new DiggerClientException(ioe);
+        }
+    }
 }
