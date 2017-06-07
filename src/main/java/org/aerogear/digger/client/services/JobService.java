@@ -21,7 +21,6 @@ import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.JobWithDetails;
 import com.offbytwo.jenkins.model.credentials.Credential;
 import org.aerogear.digger.client.util.DiggerClientException;
-import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jtwig.JtwigModel;
 import org.jtwig.JtwigTemplate;
@@ -42,7 +41,7 @@ public class JobService {
     private final static String BUILD_PARAMETERS = "BUILD_PARAMETERS";
     private static final String JOB_TEMPLATE_PATH = "templates/job.xml";
 
-    private static final Logger LOG = LoggerFactory.getLogger(JobService.class);
+    private final Logger LOG = LoggerFactory.getLogger(JobService.class);
 
     /**
      * Get a digger job on jenkins platform.
@@ -68,20 +67,10 @@ public class JobService {
      *
      * @throws IOException
      */
-    public void create(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch, Credential gitRepoCredential, List<BuildParameter> buildParameters) throws IOException {
-        String credentialId = null;
-        if (gitRepoCredential != null) {
-            credentialId = getCredentialId(name, gitRepoCredential);
-            updateCredential(jenkinsServer, credentialId, gitRepoCredential);
-        }
-
-        JtwigTemplate template = JtwigTemplate.classpathTemplate(JOB_TEMPLATE_PATH);
-        JtwigModel model = JtwigModel.newModel()
-            .with(GIT_REPO_URL, gitRepo)
-            .with(GIT_REPO_BRANCH, gitBranch)
-            .with(BUILD_PARAMETERS, buildParameters)
-            .with(GIT_CREDENTIALS_ID, credentialId);
-        jenkinsServer.createJob(name, template.render(model));
+    public void create(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch, Credential gitRepoCredential, List<BuildParameter> buildParameters) throws IOException, DiggerClientException {
+        String credentialId = updateCredential(jenkinsServer, name, gitRepoCredential);
+        String jobTemplate = renderJobTemplate(gitRepo, gitBranch, buildParameters, credentialId);
+        jenkinsServer.createJob(name, jobTemplate);
     }
 
     /**
@@ -94,7 +83,7 @@ public class JobService {
      * @throws IOException
      * @see #create(JenkinsServer, String, String, String, Credential, List)
      */
-    public void create(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch) throws IOException {
+    public void create(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch) throws IOException, DiggerClientException {
         this.create(jenkinsServer, name, gitRepo, gitBranch, null, null);
     }
 
@@ -109,20 +98,10 @@ public class JobService {
      * @param gitRepoCredential credential instance. See {@link Credential}.
      * @param buildParameters list of build parameters for the a parameterized job.
      */
-    public void update(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch, Credential gitRepoCredential, List<BuildParameter> buildParameters) throws IOException {
-        String credentialId = null;
-        if (gitRepoCredential != null) {
-            credentialId = getCredentialId(name, gitRepoCredential);
-            updateCredential(jenkinsServer, credentialId, gitRepoCredential);
-        }
-
-        JtwigTemplate template = JtwigTemplate.classpathTemplate(JOB_TEMPLATE_PATH);
-        JtwigModel model = JtwigModel.newModel()
-            .with(GIT_REPO_URL, gitRepo)
-            .with(GIT_REPO_BRANCH, gitBranch)
-            .with(BUILD_PARAMETERS, buildParameters)
-            .with(GIT_CREDENTIALS_ID, credentialId);
-        jenkinsServer.updateJob(name, template.render(model));
+    public void update(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch, Credential gitRepoCredential, List<BuildParameter> buildParameters) throws DiggerClientException, IOException {
+        String credentialId = updateCredential(jenkinsServer, name, gitRepoCredential);
+        String jobTemplate = renderJobTemplate(gitRepo, gitBranch, buildParameters, credentialId);
+        jenkinsServer.updateJob(name, jobTemplate);
     }
 
     /**
@@ -135,7 +114,7 @@ public class JobService {
      * @throws IOException
      * @see #update(JenkinsServer, String, String, String, Credential, List)
      */
-    public void update(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch) throws IOException {
+    public void update(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch) throws IOException, DiggerClientException {
         this.update(jenkinsServer, name, gitRepo, gitBranch, null, null);
     }
 
@@ -161,23 +140,47 @@ public class JobService {
     /**
      * Update the credential in Jenkins.
      * @param jenkinsServer the jenkins server instance
-     * @param credentialId the id of the credential
-     * @param gitRepoCredential the new credential instance.
-     * @throws IOException
+     * @param name the name of the job
+     * @param gitRepoCredential the new credential instance. Can be null.
+     * @return the id of the credential. Can be null if gitRepoCredential is null.
+     * @throws DiggerClientException
      */
-    private void updateCredential(JenkinsServer jenkinsServer, String credentialId, Credential gitRepoCredential) throws IOException {
-        gitRepoCredential.setId(credentialId);
-        try {
-            //remove the credential first, in case the credential value changed.
+    private String updateCredential(JenkinsServer jenkinsServer, String name, Credential gitRepoCredential) throws DiggerClientException {
+        String credentialId = null;
+        if (gitRepoCredential != null) {
+            credentialId = getCredentialId(name, gitRepoCredential);
+            gitRepoCredential.setId(credentialId);
             try {
-                jenkinsServer.deleteCredential(credentialId, false);
-            } catch (Exception e) {
-                LOG.warn("Can not delete credential with id " + credentialId + ". It might not exist.", e);
+                //remove the credential first, in case the credential value changed.
+                try {
+                    jenkinsServer.deleteCredential(credentialId, false);
+                } catch (Exception e) {
+                    LOG.warn("Can not delete credential with id " + credentialId + ". It might not exist.", e);
+                }
+                jenkinsServer.createCredential(gitRepoCredential, false);
+            } catch (IOException ioe) {
+                LOG.error("Creating credential failed with error", ioe);
+                throw new DiggerClientException("can not create credential", ioe);
             }
-            jenkinsServer.createCredential(gitRepoCredential, false);
-        } catch (IOException ioe) {
-            LOG.error("Creating credential failed with error", ioe);
-            throw ioe;
         }
+        return credentialId;
+    }
+
+    /**
+     * Get the XML string value of the jenkins job.
+     * @param gitRepo  the git repo url
+     * @param gitBranch the git branch name
+     * @param buildParameters the list of build parameters. can be null.
+     * @param credentialId the id of the credential. can be null.
+     * @return the XML string value of the jenkins job.
+     */
+    private String renderJobTemplate(String gitRepo, String gitBranch, List<BuildParameter> buildParameters, String credentialId) {
+        JtwigTemplate template = JtwigTemplate.classpathTemplate(JOB_TEMPLATE_PATH);
+        JtwigModel model = JtwigModel.newModel()
+            .with(GIT_REPO_URL, gitRepo)
+            .with(GIT_REPO_BRANCH, gitBranch)
+            .with(BUILD_PARAMETERS, buildParameters)
+            .with(GIT_CREDENTIALS_ID, credentialId);
+        return template.render(model);
     }
 }
