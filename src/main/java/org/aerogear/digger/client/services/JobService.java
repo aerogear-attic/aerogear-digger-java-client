@@ -42,6 +42,12 @@ public class JobService {
 
     private final Logger LOG = LoggerFactory.getLogger(JobService.class);
 
+    private boolean crumbFlag = false;
+
+    public JobService(boolean crumbFlag) {
+        this.crumbFlag = crumbFlag;
+    }
+
     /**
      * Get a digger job on jenkins platform.
      *
@@ -177,7 +183,7 @@ public class JobService {
             try {
                 //remove the credential first, in case the credential value changed.
                 tryDeleteCredentailWithId(jenkinsServer, credentialId);
-                jenkinsServer.createCredential(gitRepoCredential, false);
+                jenkinsServer.createCredential(gitRepoCredential, this.crumbFlag);
             } catch (IOException ioe) {
                 LOG.error("Creating credential failed with error", ioe);
                 throw new DiggerClientException("can not create credential", ioe);
@@ -211,7 +217,7 @@ public class JobService {
      */
     private void tryDeleteCredentailWithId(JenkinsServer jenkinsServer, String credentialId) {
         try {
-            jenkinsServer.deleteCredential(credentialId, false);
+            jenkinsServer.deleteCredential(credentialId, this.crumbFlag);
         } catch (Exception e) {
             LOG.warn("Can not delete credential with id " + credentialId + ". It might not exist.", e);
         }

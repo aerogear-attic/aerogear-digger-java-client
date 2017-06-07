@@ -40,7 +40,7 @@ public class JobServiceTest {
 
     @Before
     public void beforeTests() {
-        jobService = new JobService();
+        jobService = new JobService(false);
     }
 
     @Test
