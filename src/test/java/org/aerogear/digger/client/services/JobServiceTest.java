@@ -18,6 +18,8 @@ package org.aerogear.digger.client.services;
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.BuildWithDetails;
 import com.offbytwo.jenkins.model.JobWithDetails;
+import com.offbytwo.jenkins.model.credentials.Credential;
+import com.offbytwo.jenkins.model.credentials.UsernamePasswordCredential;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -67,5 +69,29 @@ public class JobServiceTest {
         BuildWithDetails build = mock(BuildWithDetails.class);
         jobService.get(server, "name");
         verify(server, times(1)).getJob(anyString());
+    }
+
+    @Test
+    public void shouldCreateJobWithCredentials() throws Exception {
+        UsernamePasswordCredential repoCredential = new UsernamePasswordCredential();
+        repoCredential.setId("testCredentialId");
+        repoCredential.setUsername("test");
+        repoCredential.setPassword("test");
+        jobService.create(server, "name", "repo", "branch", repoCredential, null);
+        verify(server, times(1)).deleteCredential(repoCredential.getId(), false);
+        verify(server, times(1)).createCredential(repoCredential, false);
+        verify(server, times(1)).createJob(anyString(), anyString());
+    }
+
+    @Test
+    public void shouldUpdateJobWithCredentials() throws Exception {
+        UsernamePasswordCredential repoCredential = new UsernamePasswordCredential();
+        repoCredential.setId("testCredentialId");
+        repoCredential.setUsername("test");
+        repoCredential.setPassword("test");
+        jobService.update(server, "name", "repo", "branch", repoCredential, null);
+        verify(server, times(1)).deleteCredential(repoCredential.getId(), false);
+        verify(server, times(1)).createCredential(repoCredential, false);
+        verify(server, times(1)).updateJob(anyString(), anyString());
     }
 }
