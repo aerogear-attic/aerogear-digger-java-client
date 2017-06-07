@@ -58,7 +58,7 @@ public class DiggerClient {
     }
 
     /**
-     * Create a client with defaults using provided url and credentials.
+     * Create a client with defaults using provided url and credentials, with crumb flag turned off.
      * <p>
      * This client will use the defaults for the services. This is perfectly fine for majorith of the cases.
      *
@@ -69,8 +69,22 @@ public class DiggerClient {
      * @throws DiggerClientException if something goes wrong
      */
     public static DiggerClient createDefaultWithAuth(String url, String user, String password) throws DiggerClientException {
+       return createDefaultWithAuth(url, user, password, false);
+    }
+
+    /**
+     * Create a client with defaults using provided url and credentials, and specify if crumb is enabled on the Jenkins server.
+     *
+     * @param url      Jenkins url
+     * @param user     Jenkins user
+     * @param password Jenkins password
+     * @param crumbFlag If CSRF Protection is enabled on the Jenkins server
+     * @return client instance
+     * @throws DiggerClientException if something goes wrong
+     */
+    public static DiggerClient createDefaultWithAuth(String url, String user, String password, boolean crumbFlag) throws DiggerClientException {
         BuildService buildService = new BuildService(BuildService.DEFAULT_FIRST_CHECK_DELAY, BuildService.DEFAULT_POLL_PERIOD);
-        JobService jobService = new JobService();
+        JobService jobService = new JobService(crumbFlag);
         ArtifactsService artifactsService = new ArtifactsService();
         return DiggerClient.builder()
             .createJobService(jobService)
@@ -79,6 +93,8 @@ public class DiggerClient {
             .withAuth(url, user, password)
             .build();
     }
+
+
 
     public static DiggerClientBuilder builder() {
         return new DiggerClientBuilder();
@@ -341,5 +357,20 @@ public class DiggerClient {
      */
     public void streamLogs(String jobName, int buildNumber, LogStreamingOptions options) throws DiggerClientException, InterruptedException, IOException {
         buildService.streamBuildLogs(jenkinsServer, jobName, buildNumber, options);
+    }
+
+    /**
+     * Delete the job from Jenkins server.
+     *
+     * @param jobName the name of the job to delete.
+     * @param credentialId the id of the credential to delete. It should be the same id value if gitRepoCredential is provided in #createJob(String, String, String, Credential, List) and it has an id value. Otherwise pass null.
+     * @throws DiggerClientException
+     */
+    public void deleteJob(String jobName, String credentialId) throws DiggerClientException {
+        try {
+            jobService.delete(jenkinsServer, jobName, credentialId);
+        } catch(IOException ioe) {
+            throw new DiggerClientException(ioe);
+        }
     }
 }

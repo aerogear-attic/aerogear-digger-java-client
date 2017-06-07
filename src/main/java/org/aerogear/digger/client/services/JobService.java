@@ -21,7 +21,6 @@ import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.JobWithDetails;
 import com.offbytwo.jenkins.model.credentials.Credential;
 import org.aerogear.digger.client.util.DiggerClientException;
-import org.apache.commons.lang.StringUtils;
 import org.jtwig.JtwigModel;
 import org.jtwig.JtwigTemplate;
 import org.slf4j.Logger;
@@ -42,6 +41,16 @@ public class JobService {
     private static final String JOB_TEMPLATE_PATH = "templates/job.xml";
 
     private final Logger LOG = LoggerFactory.getLogger(JobService.class);
+
+    private boolean crumbFlag = false;
+
+    /**
+     * Constructor.
+     * @param crumbFlag Specify if CSRF Protection is enabled on the Jenkins server.
+     */
+    public JobService(boolean crumbFlag) {
+        this.crumbFlag = crumbFlag;
+    }
 
     /**
      * Get a digger job on jenkins platform.
@@ -116,21 +125,31 @@ public class JobService {
         this.update(jenkinsServer, name, gitRepo, gitBranch, null, null);
     }
 
+    /**
+     * Delete the job and associated credential.
+     * @param jenkinsServer the Jenkins server
+     * @param name the name of the Jenkins job
+     * @param givenCredentialId the id of the credential. It should be the same id value if gitRepoCredential is provided in #create(JenkinsServer, String, String, String, Credential, List) and it has an id value. Otherwise pass null.
+     * @throws IOException
+     */
+    public void delete(JenkinsServer jenkinsServer, String name, String givenCredentialId) throws IOException {
+        String credentialId = getCredentialId(name, givenCredentialId);
+        tryDeleteCredentailWithId(jenkinsServer, credentialId);
+        jenkinsServer.deleteJob(name);
+    }
+
 
     /**
-     * Get the id of the given credential. If it's set on the given gitRepoCredential instance, it will be returned.
-     * Otherwise an id will be generated based on the jenkins job name.
+     * Return the credentialId. If the givenCredentialId is set, it will be used. Otherwise a default credentail id will be generated from the jobName.
      *
      * @param jobName the name of the jenkins job
-     * @param gitRepoCredential the credential instance.
+     * @param givenCredentialId the credentialId specified in a Credential instance.
      * @return the credential id.
      */
-    private String getCredentialId(String jobName, Credential gitRepoCredential) {
-        String credentialId = null;
-        if (StringUtils.isEmpty(gitRepoCredential.getId())) {
+    private String getCredentialId(String jobName, String givenCredentialId) {
+        String credentialId = givenCredentialId;
+        if (credentialId == null) {
             credentialId = String.format("%s-%s", jobName, "gitRepoCredential");
-        } else {
-            credentialId = gitRepoCredential.getId();
         }
         return credentialId;
     }
@@ -163,16 +182,12 @@ public class JobService {
     private String updateCredential(JenkinsServer jenkinsServer, String name, Credential gitRepoCredential) throws DiggerClientException {
         String credentialId = null;
         if (gitRepoCredential != null) {
-            credentialId = getCredentialId(name, gitRepoCredential);
+            credentialId = getCredentialId(name, gitRepoCredential.getId());
             gitRepoCredential.setId(credentialId);
             try {
                 //remove the credential first, in case the credential value changed.
-                try {
-                    jenkinsServer.deleteCredential(credentialId, false);
-                } catch (Exception e) {
-                    LOG.warn("Can not delete credential with id " + credentialId + ". It might not exist.", e);
-                }
-                jenkinsServer.createCredential(gitRepoCredential, false);
+                tryDeleteCredentailWithId(jenkinsServer, credentialId);
+                jenkinsServer.createCredential(gitRepoCredential, this.crumbFlag);
             } catch (IOException ioe) {
                 LOG.error("Creating credential failed with error", ioe);
                 throw new DiggerClientException("can not create credential", ioe);
@@ -197,5 +212,18 @@ public class JobService {
             .with(BUILD_PARAMETERS, buildParameters)
             .with(GIT_CREDENTIALS_ID, credentialId);
         return template.render(model);
+    }
+
+    /**
+     * Try to delete a credential from Jenkins with the given credentialId
+     * @param jenkinsServer the jenkins server
+     * @param credentialId the credential id
+     */
+    private void tryDeleteCredentailWithId(JenkinsServer jenkinsServer, String credentialId) {
+        try {
+            jenkinsServer.deleteCredential(credentialId, this.crumbFlag);
+        } catch (Exception e) {
+            LOG.warn("Can not delete credential with id " + credentialId + ". It might not exist.", e);
+        }
     }
 }

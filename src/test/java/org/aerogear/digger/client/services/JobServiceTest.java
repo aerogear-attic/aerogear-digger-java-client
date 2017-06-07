@@ -40,7 +40,7 @@ public class JobServiceTest {
 
     @Before
     public void beforeTests() {
-        jobService = new JobService();
+        jobService = new JobService(false);
     }
 
     @Test
@@ -93,5 +93,11 @@ public class JobServiceTest {
         verify(server, times(1)).deleteCredential(repoCredential.getId(), false);
         verify(server, times(1)).createCredential(repoCredential, false);
         verify(server, times(1)).updateJob(anyString(), anyString());
+    }
+
+    public void shouldDeleteJob() throws Exception {
+        jobService.delete(server, "testJob", null);
+        verify(server, times(1)).deleteCredential(anyString(), anyBoolean());
+        verify(server, times(1)).deleteJob(anyString());
     }
 }
