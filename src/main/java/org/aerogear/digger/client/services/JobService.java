@@ -68,8 +68,7 @@ public class JobService {
      * @throws IOException
      */
     public void create(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch, Credential gitRepoCredential, List<BuildParameter> buildParameters) throws IOException, DiggerClientException {
-        String credentialId = updateCredential(jenkinsServer, name, gitRepoCredential);
-        String jobTemplate = renderJobTemplate(gitRepo, gitBranch, buildParameters, credentialId);
+        String jobTemplate = prepareJob(jenkinsServer, name, gitRepo, gitBranch, gitRepoCredential, buildParameters);
         jenkinsServer.createJob(name, jobTemplate);
     }
 
@@ -99,8 +98,7 @@ public class JobService {
      * @param buildParameters list of build parameters for the a parameterized job.
      */
     public void update(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch, Credential gitRepoCredential, List<BuildParameter> buildParameters) throws DiggerClientException, IOException {
-        String credentialId = updateCredential(jenkinsServer, name, gitRepoCredential);
-        String jobTemplate = renderJobTemplate(gitRepo, gitBranch, buildParameters, credentialId);
+        String jobTemplate = prepareJob(jenkinsServer, name, gitRepo, gitBranch, gitRepoCredential, buildParameters);
         jenkinsServer.updateJob(name, jobTemplate);
     }
 
@@ -135,6 +133,23 @@ public class JobService {
             credentialId = gitRepoCredential.getId();
         }
         return credentialId;
+    }
+
+    /**
+     * Prepare before creating/updating the jenkins job.
+     * @param jenkinsServer the jenkins server
+     * @param name  the name of the job
+     * @param gitRepo the git repo
+     * @param gitBranch the git branch
+     * @param gitRepoCredential the credential to access the git repo. can be bull.
+     * @param buildParameters list of build parameters. can be null.
+     * @return the XML string value of the jenkins job
+     * @throws DiggerClientException
+     */
+    private String prepareJob(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch, Credential gitRepoCredential, List<BuildParameter> buildParameters) throws DiggerClientException {
+        String credentialId = updateCredential(jenkinsServer, name, gitRepoCredential);
+        String jobTemplate = renderJobTemplate(gitRepo, gitBranch, buildParameters, credentialId);
+        return jobTemplate;
     }
 
     /**
