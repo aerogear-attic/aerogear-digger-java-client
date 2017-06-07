@@ -44,6 +44,10 @@ public class JobService {
 
     private boolean crumbFlag = false;
 
+    /**
+     * Constructor.
+     * @param crumbFlag Specify if CSRF Protection is enabled on the Jenkins server.
+     */
     public JobService(boolean crumbFlag) {
         this.crumbFlag = crumbFlag;
     }

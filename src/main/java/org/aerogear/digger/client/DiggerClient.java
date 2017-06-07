@@ -78,7 +78,7 @@ public class DiggerClient {
      * @param url      Jenkins url
      * @param user     Jenkins user
      * @param password Jenkins password
-     * @param crumbFlag If crumb is enabled on the Jenkins server
+     * @param crumbFlag If CSRF Protection is enabled on the Jenkins server
      * @return client instance
      * @throws DiggerClientException if something goes wrong
      */
