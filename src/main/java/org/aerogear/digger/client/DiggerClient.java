@@ -373,4 +373,16 @@ public class DiggerClient {
             throw new DiggerClientException(ioe);
         }
     }
+
+    /**
+     * Get the details about a build.
+     *
+     * @param jobName the name of the job
+     * @param buildNumber the build number
+     * @return the build details
+     * @throws DiggerClientException
+     */
+    public BuildWithDetails getBuildDetails(String jobName, int buildNumber) throws DiggerClientException {
+        return buildService.getBuildDetails(jenkinsServer, jobName, buildNumber);
+    }
 }
