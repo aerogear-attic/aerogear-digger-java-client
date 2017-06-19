@@ -385,4 +385,12 @@ public class DiggerClient {
     public BuildWithDetails getBuildDetails(String jobName, int buildNumber) throws DiggerClientException {
         return buildService.getBuildDetails(jenkinsServer, jobName, buildNumber);
     }
+
+    /**
+     * Expose the underline Jenkins Server client to allow perform other operations that may not be implemented by the jenkins digger client.
+     * @return the instance of the jenkins server
+     */
+    public JenkinsServer getJenkinsServer() {
+        return this.jenkinsServer;
+    }
 }
