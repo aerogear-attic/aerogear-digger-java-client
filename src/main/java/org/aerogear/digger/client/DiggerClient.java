@@ -19,6 +19,7 @@ import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.BuildWithDetails;
 import com.offbytwo.jenkins.model.JobWithDetails;
 import com.offbytwo.jenkins.model.credentials.Credential;
+import org.aerogear.digger.client.model.BuildDiscarder;
 import org.aerogear.digger.client.model.BuildTriggerStatus;
 import org.aerogear.digger.client.model.BuildParameter;
 import org.aerogear.digger.client.model.LogStreamingOptions;
@@ -142,16 +143,16 @@ public class DiggerClient {
 
 
     /**
-     * Create new Digger job on Jenkins platform
+     * Create new Digger job on Jenkins platform with build and binary cleanup
      *
      * @param name      job name that can be used later to reference job
      * @param gitRepo   git repository url (full git repository url. e.g git@github.com:wtrocki/helloworld-android-gradle.git
      * @param gitBranch git repository branch (default branch used to checkout source code)
      * @throws DiggerClientException if something goes wrong
      */
-    public void createJob(String name, String gitRepo, String gitBranch) throws DiggerClientException {
+    public void createJob(String name, String gitRepo, String gitBranch, BuildDiscarder buildDiscarder) throws DiggerClientException {
         try {
-            jobService.create(this.jenkinsServer, name, gitRepo, gitBranch);
+            jobService.create(this.jenkinsServer, name, gitRepo, gitBranch, buildDiscarder);
         } catch (Throwable e) {
             throw new DiggerClientException(e);
         }
@@ -165,12 +166,11 @@ public class DiggerClient {
      * @param gitBranch       git repository branch (default branch used to checkout source code)
      * @param gitRepoCredential the credential that will be used to clone the repo.
      * @param buildParameters list of parameters for a Jenkins parameterized build.
-     *
      * @throws DiggerClientException if something goes wrong
      */
-    public void createJob(String name, String gitRepo, String gitBranch, Credential gitRepoCredential, List<BuildParameter> buildParameters) throws DiggerClientException {
+    public void createJob(String name, String gitRepo, String gitBranch, BuildDiscarder buildDiscarder, Credential gitRepoCredential, List<BuildParameter> buildParameters) throws DiggerClientException {
         try {
-            jobService.create(this.jenkinsServer, name, gitRepo, gitBranch, gitRepoCredential, buildParameters);
+            jobService.create(this.jenkinsServer, name, gitRepo, gitBranch, buildDiscarder, gitRepoCredential, buildParameters);
         } catch (Throwable e) {
             throw new DiggerClientException(e);
         }
@@ -182,11 +182,12 @@ public class DiggerClient {
      * @param name      job name that can be used later to reference job
      * @param gitRepo   git repository url (full git repository url. e.g git@github.com:wtrocki/helloworld-android-gradle.git
      * @param gitBranch git repository branch (default branch used to checkout source code)
+     * @param buildDiscarder  BuildDiscarder instance. See {@link BuildDiscarder}
      * @throws DiggerClientException if something goes wrong
      */
-    public void updateJob(String name, String gitRepo, String gitBranch) throws DiggerClientException {
+    public void updateJob(String name, String gitRepo, String gitBranch, BuildDiscarder buildDiscarder) throws DiggerClientException {
         try {
-            jobService.update(this.jenkinsServer, name, gitRepo, gitBranch);
+            jobService.update(this.jenkinsServer, name, gitRepo, gitBranch, buildDiscarder);
         } catch (Throwable e) {
             throw new DiggerClientException(e);
         }
@@ -198,14 +199,14 @@ public class DiggerClient {
      * @param name            job name that can be used later to reference job
      * @param gitRepo         git repository url (full git repository url. e.g git@github.com:wtrocki/helloworld-android-gradle.git
      * @param gitBranch       git repository branch (default branch used to checkout source code)
+     * @param buildDiscarder  BuildDiscarder instance. See {@link BuildDiscarder}
      * @param gitRepoCredential the credential that will be used to clone the repo
      * @param buildParameters list of parameters for a Jenkins parameterized build.
-     *
      * @throws DiggerClientException if something goes wrong
      */
-    public void updateJob(String name, String gitRepo, String gitBranch, Credential gitRepoCredential, List<BuildParameter> buildParameters) throws DiggerClientException {
+    public void updateJob(String name, String gitRepo, String gitBranch, BuildDiscarder buildDiscarder, Credential gitRepoCredential, List<BuildParameter> buildParameters) throws DiggerClientException {
         try {
-            jobService.update(this.jenkinsServer, name, gitRepo, gitBranch, gitRepoCredential, buildParameters);
+            jobService.update(this.jenkinsServer, name, gitRepo, gitBranch, buildDiscarder, gitRepoCredential, buildParameters);
         } catch (Throwable e) {
             throw new DiggerClientException(e);
         }

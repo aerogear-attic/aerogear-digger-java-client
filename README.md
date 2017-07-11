@@ -59,6 +59,34 @@ Create job:
   client.createJob("java-client-job1","https://github.com/wtrocki/helloworld-android-gradle","master");
 ```
 
+The client supports setting clean-up values for jobs in relation to the number of days to store builds and artifacts
+and the total number of builds and artifacts to keep.
+
+Create a job with clean-up policy:
+```java
+import org.aerogear.digger.client.model.BuildDiscarder
+
+BuildDiscarder buildDiscarder = new BuildDiscarder();
+buildDiscarder.setStoreBuildsDays(7)
+client.createJob("java-client-job1","https://github.com/wtrocki/helloworld-android-gradle","master", buildDiscarder);
+```
+
+
+The client supports passing a list of build parameters. To create a job with build params:
+```java
+import org.aerogear.digger.client.model.BuildParameter;
+
+public static final BuildParameter EXAMPLE = new BuildParameter(EXAMPLE)
+   .setDescription("Branch of project to checkout and build.")
+   .setDefaultValue("master");
+
+private List<BuildParameter> params = Lists.newArrayList(EXAMPLE)
+
+client.createJob("java-client-job1","https://github.com/wtrocki/helloworld-android-gradle","master", params);
+
+```
+
+
 Trigger a job:
 
 ```
