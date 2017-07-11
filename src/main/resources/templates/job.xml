@@ -15,6 +15,14 @@
                 </parameterDefinitions>
             </hudson.model.ParametersDefinitionProperty>
         {% endif %}
+        <jenkins.model.BuildDiscarderProperty>
+            <strategy class="hudson.tasks.LogRotator">
+                <daysToKeep>{{ STORE_BUILDS_DAYS }}</daysToKeep>
+                <numToKeep>{{ STORE_BUILDS_TOTAL }}</numToKeep>
+                <artifactDaysToKeep>{{ STORE_ARTIFACTS_DAYS }}</artifactDaysToKeep>
+                <artifactNumToKeep>{{ STORE_ARTIFACTS_TOTAL }}</artifactNumToKeep>
+            </strategy>
+        </jenkins.model.BuildDiscarderProperty>
         <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
             <triggers/>
         </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>

@@ -15,11 +15,11 @@
  */
 package org.aerogear.digger.client.services;
 
-import org.aerogear.digger.client.model.BuildParameter;
-
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.JobWithDetails;
 import com.offbytwo.jenkins.model.credentials.Credential;
+import org.aerogear.digger.client.model.BuildDiscarder;
+import org.aerogear.digger.client.model.BuildParameter;
 import org.aerogear.digger.client.util.DiggerClientException;
 import org.jtwig.JtwigModel;
 import org.jtwig.JtwigTemplate;
@@ -38,6 +38,10 @@ public class JobService {
     private final static String GIT_CREDENTIALS_ID = "GIT_CREDENTIALS_ID";
     private final static String GIT_REPO_BRANCH = "GIT_REPO_BRANCH";
     private final static String BUILD_PARAMETERS = "BUILD_PARAMETERS";
+    private final static String STORE_BUILDS_DAYS = "STORE_BUILDS_DAYS";
+    private final static String STORE_BUILDS_TOTAL = "STORE_BUILDS_TOTAL";
+    private final static String STORE_ARTIFACTS_DAYS = "STORE_ARTIFACTS_DAYS";
+    private final static String STORE_ARTIFACTS_TOTAL = "STORE_ARTIFACTS_TOTAL";
     private static final String JOB_TEMPLATE_PATH = "templates/job.xml";
 
     private final Logger LOG = LoggerFactory.getLogger(JobService.class);
@@ -71,14 +75,31 @@ public class JobService {
      * @param name            job name that can be used later to reference job
      * @param gitRepo         git repository url (full git repository url. e.g git@github.com:digger/helloworld.git
      * @param gitBranch       git repository branch (default branch used to checkout source code)
+     * @param buildDiscarder  BuildDiscarder instance. See {@link BuildDiscarder}
+     * @param gitRepoCredential credential instance. See {@link Credential}.
+     * @param buildParameters list of build parameters for the a parameterized job.
+     *
+     * @throws IOException
+     */
+    public void create(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch, BuildDiscarder buildDiscarder, Credential gitRepoCredential, List<BuildParameter> buildParameters) throws IOException, DiggerClientException {
+        String jobTemplate = prepareJob(jenkinsServer, name, gitRepo, gitBranch, buildDiscarder, gitRepoCredential, buildParameters);
+        jenkinsServer.createJob(name, jobTemplate);
+    }
+
+    /**
+     * Create new digger job on jenkins platform
+     *
+     * @param jenkinsServer   Jenkins server client
+     * @param name            job name that can be used later to reference job
+     * @param gitRepo         git repository url (full git repository url. e.g git@github.com:digger/helloworld.git
+     * @param gitBranch       git repository branch (default branch used to checkout source code)
      * @param gitRepoCredential credential instance. See {@link Credential}.
      * @param buildParameters list of build parameters for the a parameterized job.
      *
      * @throws IOException
      */
     public void create(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch, Credential gitRepoCredential, List<BuildParameter> buildParameters) throws IOException, DiggerClientException {
-        String jobTemplate = prepareJob(jenkinsServer, name, gitRepo, gitBranch, gitRepoCredential, buildParameters);
-        jenkinsServer.createJob(name, jobTemplate);
+        this.create(jenkinsServer, name, gitRepo, gitBranch, null, gitRepoCredential, buildParameters);
     }
 
     /**
@@ -87,12 +108,28 @@ public class JobService {
      * @param jenkinsServer Jenkins server client
      * @param name          job name that can be used later to reference job
      * @param gitRepo       git repository url (full git repository url. e.g git@github.com:digger/helloworld.git
-     * @param gitBranch     git repository branch (default branch used to checkout source code)
+     * @param gitBranch     git repository branch (default branch used to checkout source code)     * @param storeBuildsDays the number of days a build should be persisted for before cleanup
+     * @param buildDiscarder  BuildDiscarder instance. See {@link BuildDiscarder}
      * @throws IOException
-     * @see #create(JenkinsServer, String, String, String, Credential, List)
+     * @see #create(JenkinsServer, String, String, String, BuildDiscarder, Credential, List)
+     */
+    public void create(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch, BuildDiscarder buildDiscarder) throws IOException, DiggerClientException {
+        this.create(jenkinsServer, name, gitRepo, gitBranch, buildDiscarder, null , null);
+    }
+
+
+    /**
+     * Create new digger job on jenkins platform with no parameters.
+     *
+     * @param jenkinsServer Jenkins server client
+     * @param name          job name that can be used later to reference job
+     * @param gitRepo       git repository url (full git repository url. e.g git@github.com:digger/helloworld.git
+     * @param gitBranch     git repository branch (default branch used to checkout source code)     * @param storeBuildsDays the number of days a build should be persisted for before cleanup
+     * @throws IOException
+     * @see #create(JenkinsServer, String, String, String, BuildDiscarder, Credential, List)
      */
     public void create(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch) throws IOException, DiggerClientException {
-        this.create(jenkinsServer, name, gitRepo, gitBranch, null, null);
+        this.create(jenkinsServer, name, gitRepo, gitBranch, null, null , null);
     }
 
     /**
@@ -103,26 +140,28 @@ public class JobService {
      * @param name            job name that can be used later to reference job
      * @param gitRepo         git repository url (full git repository url. e.g git@github.com:digger/helloworld.git
      * @param gitBranch       git repository branch (default branch used to checkout source code)
+     * @param buildDiscarder  BuildDiscarder instance. See {@link BuildDiscarder}
      * @param gitRepoCredential credential instance. See {@link Credential}.
      * @param buildParameters list of build parameters for the a parameterized job.
      */
-    public void update(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch, Credential gitRepoCredential, List<BuildParameter> buildParameters) throws DiggerClientException, IOException {
-        String jobTemplate = prepareJob(jenkinsServer, name, gitRepo, gitBranch, gitRepoCredential, buildParameters);
+    public void update(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch, BuildDiscarder buildDiscarder, Credential gitRepoCredential, List<BuildParameter> buildParameters) throws DiggerClientException, IOException {
+        String jobTemplate = prepareJob(jenkinsServer, name, gitRepo, gitBranch, buildDiscarder, gitRepoCredential, buildParameters);
         jenkinsServer.updateJob(name, jobTemplate);
     }
 
     /**
-     *  Update digger job ob jenkins platform with no parameters.
+     *  Update digger job on jenkins platform with no parameters.
      *
      * @param jenkinsServer Jenkins server client
      * @param name          job name that can be used later to reference job
      * @param gitRepo       git repository url (full git repository url. e.g git@github.com:digger/helloworld.git
      * @param gitBranch     git repository branch (default branch used to checkout source code)
+     * @param buildDiscarder  BuildDiscarder instance. See {@link BuildDiscarder}
      * @throws IOException
-     * @see #update(JenkinsServer, String, String, String, Credential, List)
+     * @see #update(JenkinsServer, String, String, String, BuildDiscarder, Credential, List)
      */
-    public void update(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch) throws IOException, DiggerClientException {
-        this.update(jenkinsServer, name, gitRepo, gitBranch, null, null);
+    public void update(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch, BuildDiscarder buildDiscarder) throws IOException, DiggerClientException {
+        this.update(jenkinsServer, name, gitRepo, gitBranch, buildDiscarder, null, null);
     }
 
     /**
@@ -165,9 +204,9 @@ public class JobService {
      * @return the XML string value of the jenkins job
      * @throws DiggerClientException
      */
-    private String prepareJob(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch, Credential gitRepoCredential, List<BuildParameter> buildParameters) throws DiggerClientException {
+    private String prepareJob(JenkinsServer jenkinsServer, String name, String gitRepo, String gitBranch, BuildDiscarder buildDiscarder, Credential gitRepoCredential, List<BuildParameter> buildParameters) throws DiggerClientException {
         String credentialId = updateCredential(jenkinsServer, name, gitRepoCredential);
-        String jobTemplate = renderJobTemplate(gitRepo, gitBranch, buildParameters, credentialId);
+        String jobTemplate = renderJobTemplate(gitRepo, gitBranch, buildDiscarder, buildParameters, credentialId);
         return jobTemplate;
     }
 
@@ -204,15 +243,25 @@ public class JobService {
      * @param credentialId the id of the credential. can be null.
      * @return the XML string value of the jenkins job.
      */
-    private String renderJobTemplate(String gitRepo, String gitBranch, List<BuildParameter> buildParameters, String credentialId) {
+    private String renderJobTemplate(String gitRepo, String gitBranch, BuildDiscarder buildDiscarder, List<BuildParameter> buildParameters, String credentialId) {
+
+        if (buildDiscarder == null) {
+            buildDiscarder = new BuildDiscarder();
+        }
+
         JtwigTemplate template = JtwigTemplate.classpathTemplate(JOB_TEMPLATE_PATH);
         JtwigModel model = JtwigModel.newModel()
             .with(GIT_REPO_URL, gitRepo)
             .with(GIT_REPO_BRANCH, gitBranch)
+            .with(STORE_BUILDS_DAYS, buildDiscarder.getStoreBuildsDays())
+            .with(STORE_BUILDS_TOTAL, buildDiscarder.getStoreBuildsTotal())
+            .with(STORE_ARTIFACTS_DAYS, buildDiscarder.getStoreArtifactsDays())
+            .with(STORE_ARTIFACTS_TOTAL, buildDiscarder.getStoreArtifactsTotal())
             .with(BUILD_PARAMETERS, buildParameters)
             .with(GIT_CREDENTIALS_ID, credentialId);
         return template.render(model);
     }
+
 
     /**
      * Try to delete a credential from Jenkins with the given credentialId
