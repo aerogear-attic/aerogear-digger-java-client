@@ -10,7 +10,7 @@
 
     <groupId>org.jboss.aerogear</groupId>
     <artifactId>digger-java-client</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -28,7 +28,7 @@
         <connection>scm:git:git://github.com/aerogear/digger-java.git</connection>
         <developerConnection>scm:git:git@github.com:aerogear/digger-java.git</developerConnection>
         <url>https://github.com/aerogear/digger-java</url>
-        <tag>digger-java-client-1.0.1</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <licenses>
