@@ -32,7 +32,7 @@ Add the following dependencies to your ```pom.xml``` file:
 <dependency>
     <groupId>org.jboss.aerogear</groupId>
     <artifactId>digger-java-client</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 
