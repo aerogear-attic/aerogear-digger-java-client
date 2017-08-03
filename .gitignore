@@ -1,3 +1,9 @@
+
+# VS Code
+.classpath
+.project
+.settings/
+
 target/
 
 pom.xml.tag
