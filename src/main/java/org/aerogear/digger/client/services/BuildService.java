@@ -15,19 +15,18 @@
  */
 package org.aerogear.digger.client.services;
 
-import org.apache.commons.collections4.MapUtils;
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.*;
 import org.aerogear.digger.client.DiggerClient;
 import org.aerogear.digger.client.model.BuildTriggerStatus;
 import org.aerogear.digger.client.model.LogStreamingOptions;
 import org.aerogear.digger.client.util.DiggerClientException;
+import org.apache.commons.collections4.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
