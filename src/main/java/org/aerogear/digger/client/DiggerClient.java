@@ -329,7 +329,7 @@ public class DiggerClient {
      * @return String with file contents that can be saved or piped to socket
      * @throws DiggerClientException when problem with fetching artifacts from jenkins
      */
-    public String getBuildLogs(String jobName, int buildNumber) throws DiggerClientException {
+    public String getBuildLogs(String jobName, int buildNumber) throws DiggerClientException, IOException {
         return buildService.getBuildLogs(jenkinsServer, jobName, buildNumber);
     }
 
@@ -383,9 +383,21 @@ public class DiggerClient {
      * @return the build details
      * @throws DiggerClientException
      */
-    public BuildWithDetails getBuildDetails(String jobName, int buildNumber) throws DiggerClientException {
+    public BuildWithDetails getBuildDetails(String jobName, int buildNumber) throws DiggerClientException, IOException {
         return buildService.getBuildDetails(jenkinsServer, jobName, buildNumber);
     }
+
+    /**
+     * Cancel a build for a specific job
+     *
+     * @param jobName the name of the job
+     * @param buildNumber the build number
+     * @throws DiggerClientException
+     */
+    public BuildWithDetails cancelBuild(String jobName, int buildNumber) throws DiggerClientException, IOException {
+        return buildService.cancelBuild(jenkinsServer, jobName, buildNumber);
+    }
+
 
     /**
      * Expose the underline Jenkins Server client to allow perform other operations that may not be implemented by the jenkins digger client.

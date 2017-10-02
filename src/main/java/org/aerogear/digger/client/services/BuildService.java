@@ -15,19 +15,18 @@
  */
 package org.aerogear.digger.client.services;
 
-import org.apache.commons.collections4.MapUtils;
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.*;
 import org.aerogear.digger.client.DiggerClient;
 import org.aerogear.digger.client.model.BuildTriggerStatus;
 import org.aerogear.digger.client.model.LogStreamingOptions;
 import org.aerogear.digger.client.util.DiggerClientException;
+import org.apache.commons.collections4.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -71,20 +70,10 @@ public class BuildService {
      * @return String with file contents that can be saved or piped to socket
      * @throws DiggerClientException when problem with fetching artifacts from jenkins
      */
-    public String getBuildLogs(JenkinsServer jenkins, String jobName, int buildNumber) throws DiggerClientException {
-        try {
-            JobWithDetails job = jenkins.getJob(jobName);
-            if (job == null) {
-                LOG.error("Cannot fetch job from jenkins {0}", jobName);
-                throw new DiggerClientException("Cannot fetch job from jenkins");
-            }
-            Build build = job.getBuildByNumber(buildNumber);
-            BuildWithDetails buildWithDetails = build.details();
-            return buildWithDetails.getConsoleOutputText();
-        } catch (IOException e) {
-            LOG.error("Problem when fetching logs for {0} {1}", jobName, buildNumber, e);
-            throw new DiggerClientException(e);
-        }
+    public String getBuildLogs(JenkinsServer jenkins, String jobName, int buildNumber) throws DiggerClientException, IOException {
+        Build build = this.getBuild(jenkins, jobName, buildNumber);
+        BuildWithDetails buildWithDetails = build.details();
+        return buildWithDetails.getConsoleOutputText();
     }
 
     /**
@@ -222,6 +211,30 @@ public class BuildService {
     }
 
     /**
+     * Retrieve a build from a specific job
+     *
+     * @param jenkins the jenkins instance
+     * @param jobName the name of the job
+     * @param buildNumber the build number
+     * @return {@link Build}
+     * @throws DiggerClientException
+     */
+    public Build getBuild(JenkinsServer jenkins, String jobName, int buildNumber) throws DiggerClientException {
+        try {
+            JobWithDetails job = jenkins.getJob(jobName);
+            if (job == null) {
+                LOG.error("Cannot fetch job from jenkins {0}", jobName);
+                throw new DiggerClientException("Cannot fetch job from jenkins");
+            }
+            Build build = job.getBuildByNumber(buildNumber);
+            return build;
+        } catch (IOException e) {
+            LOG.error("Problem when fetching logs for {0} {1}", jobName, buildNumber, e);
+            throw new DiggerClientException(e);
+        }
+    }
+
+    /**
      * Get the build details of a job
      *
      * @param jenkins the jenkins instance
@@ -230,20 +243,27 @@ public class BuildService {
      * @return {@link BuildWithDetails}
      * @throws DiggerClientException
      */
-    public BuildWithDetails getBuildDetails(JenkinsServer jenkins, String jobName, int buildNumber) throws DiggerClientException {
-        try {
-            JobWithDetails job = jenkins.getJob(jobName);
-            if (job == null) {
-                LOG.error("Cannot fetch job from jenkins {0}", jobName);
-                throw new DiggerClientException("Cannot fetch job from jenkins");
-            }
-            Build build = job.getBuildByNumber(buildNumber);
-            BuildWithDetails buildWithDetails = build.details();
-            return buildWithDetails;
-        } catch (IOException e) {
-            LOG.error("Problem when fetching logs for {0} {1}", jobName, buildNumber, e);
-            throw new DiggerClientException(e);
-        }
+    public BuildWithDetails getBuildDetails(JenkinsServer jenkins, String jobName, int buildNumber) throws DiggerClientException, IOException {
+
+        Build build = this.getBuild(jenkins, jobName, buildNumber);
+        BuildWithDetails buildWithDetails = build.details();
+        return buildWithDetails;
+    }
+
+    /**
+     * Cancel a build
+     * @param jenkins the jenkins instance
+     * @param jobName the name of the job
+     * @param buildNumber the build number
+     * @return {@link BuildWithDetails}
+     * @throws DiggerClientException
+     * @throws IOException
+     */
+    public BuildWithDetails cancelBuild(JenkinsServer jenkins, String jobName, int buildNumber) throws DiggerClientException, IOException {
+        Build build = this.getBuild(jenkins, jobName, buildNumber);
+        build.Stop();
+        BuildWithDetails buildWithDetails = build.details();
+        return buildWithDetails;
     }
 
     /**

@@ -231,4 +231,22 @@ public class BuildServiceTest {
         verify(buildDetails).streamConsoleOutput(options.getStreamListener(), options.getPollingInterval(), options.getPollingTimeout());
     }
 
+    @Test
+    public void shouldReturnAborted() throws Exception {
+        final QueueItem queueItem = new QueueItem();
+        final Executable executable = new Executable();
+        executable.setNumber(98L);
+        queueItem.setExecutable(executable);
+
+        Mockito.when(mockJob.build()).thenReturn(queueReference);
+        Mockito.when(jenkinsServer.getQueueItem(queueReference)).thenReturn(queueItem);
+        final BuildTriggerStatus buildTriggerStatus = service.build(jenkinsServer, "TEST", 10000L);
+
+        assertThat(buildTriggerStatus).isNotNull();
+        assertThat(buildTriggerStatus.getState()).isEqualTo(BuildTriggerStatus.State.STARTED_BUILDING);
+        assertThat(buildTriggerStatus.getBuildNumber()).isEqualTo(98);
+        BuildWithDetails buildWithDetails = service.cancelBuild(jenkinsServer, "TEST", 98);
+        assertThat(buildWithDetails.getResult()).isEqualTo("Aborted");
+    }
+
 }
