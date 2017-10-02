@@ -238,15 +238,34 @@ public class BuildServiceTest {
         executable.setNumber(98L);
         queueItem.setExecutable(executable);
 
+        // hard to construct these... so, let's mock them
+        // they look like data objects, but they're not. I wish there were no logic in them...
+        // mocking data objects is an anti pattern.
+        final Build mockBuild = Mockito.mock(Build.class);
+        final BuildWithDetails mockBuildWithDetails = Mockito.mock(BuildWithDetails.class);
+
         Mockito.when(mockJob.build()).thenReturn(queueReference);
         Mockito.when(jenkinsServer.getQueueItem(queueReference)).thenReturn(queueItem);
-        final BuildTriggerStatus buildTriggerStatus = service.build(jenkinsServer, "TEST", 10000L);
+        // BuildService.cancel() method internally goes and fetches the job and the build initially.
+        // afterwards, it fetches the buildDetails.
+        // so, we have to mock those calls...
+        Mockito.when(mockJob.getBuildByNumber(98)).thenReturn(mockBuild);
+        Mockito.when(mockBuild.details()).thenReturn(mockBuildWithDetails);
+        Mockito.when(mockBuildWithDetails.getResult()).thenReturn(BuildResult.ABORTED);
 
-        assertThat(buildTriggerStatus).isNotNull();
-        assertThat(buildTriggerStatus.getState()).isEqualTo(BuildTriggerStatus.State.STARTED_BUILDING);
-        assertThat(buildTriggerStatus.getBuildNumber()).isEqualTo(98);
+        // PGOUGH: You don't need these...
+        // You don't actually send something to Jenkins, nor you change any internal state of the
+        // Jenkins client. Just delete these lines...
+        //
+        // final BuildTriggerStatus buildTriggerStatus = service.build(jenkinsServer, "TEST", 10000L);
+        // assertThat(buildTriggerStatus).isNotNull();
+        // assertThat(buildTriggerStatus.getState()).isEqualTo(BuildTriggerStatus.State.STARTED_BUILDING);
+        // assertThat(buildTriggerStatus.getBuildNumber()).isEqualTo(98);
+
         BuildWithDetails buildWithDetails = service.cancelBuild(jenkinsServer, "TEST", 98);
-        assertThat(buildWithDetails.getResult()).isEqualTo("Aborted");
+
+        assertThat(buildWithDetails.getResult()).isEqualTo(BuildResult.ABORTED);
+        Mockito.verify(mockBuild, Mockito.times(1)).Stop();
     }
 
 }
