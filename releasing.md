@@ -2,11 +2,9 @@
 
 ### Big Picture
 
-* We release to Sonatype Nexus.
-* That syncs with Maven Central.
-* We don't use JBoss Nexus as it is slower and there is no need for that if we are able to publish to Sonatype.
+We release to Sonatype Nexus and that syncs with Maven Central.
 
-A more general document with no Sonatype inststructions: https://github.com/aerogear/collateral/wiki/Release-Process-(Java)
+A more general document with no Sonatype instructions: https://github.com/aerogear/collateral/wiki/Release-Process-(Java)
 
 ## Requirements
 
@@ -57,8 +55,6 @@ Copy the block (including the `--------BEGIN...` and `-----END...` lines) and pa
 
 #### Requirement - Sonatype Nexus account
 
-If you would like to have a fast sync with Maven central, Sonatype's OSS Nexus is the way to go.
-
 1. Create Sonatype account here: https://issues.sonatype.org/secure/Signup!default.jspa
 2. Check if login works to Nexus: https://oss.sonatype.org/
 3. Ask for publishing permissions for the `groupId` (in pom.xml) of the project you want to publish. Ask @passos or @matzew to add a comment to one of these tickets:
@@ -84,9 +80,10 @@ Make sure you created a master password.
 
 ### Setup - Sonatype Nexus
 
-First of all, make sure your pom.xml is conforming the requirements of Sonatype: http://central.sonatype.org/pages/apache-maven.html
+For the reference, in order to publish to Sonatype OSS repo, one must:
 
-In order to publish to Sonatype Nexus, have this section in your pom.xml file:
+* Make sure your pom.xml is conforming the requirements of Sonatype: http://central.sonatype.org/pages/apache-maven.html
+* Have this section in the pom.xml file:
 
 ```
     <distributionManagement>
@@ -100,6 +97,7 @@ In order to publish to Sonatype Nexus, have this section in your pom.xml file:
         </repository>
     </distributionManagement>
 ```
+Things above are already done, so you don't need to worry.
 
 Encrypt your Sonatype password:
 ```
@@ -300,5 +298,5 @@ The artifact will be literary released. To do that just push the "Release" butto
 
 Check e.g. here for the release artifacts: https://oss.sonatype.org/content/groups/public/org/jboss/aerogear/digger-java-client/1.1.1/
 
-Sonatype OSS Nexus to synchronize with Maven central repo could take up to 2 days (should be 2-3 hours generally).
+Sonatype OSS Nexus will synchronize with Maven central repo within 30 minutes.
 Search for [your release in maven central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.jboss.aerogear%22%20AND%20a%3A%22digger-java-client%22).
