@@ -124,9 +124,9 @@ Use that password in your `~/.m2/settings.xml`:
 
 ## Testing by releasing snapshots
 
-You can test if things work correctly by releasing a snapshot.
+The release process can be tested by releasing a snapshot.
 
-This tests two things:
+This tests two steps:
 * upload to the Nexus repository works
 * your GPG settings are working and you are able to sign the artifacts
 
