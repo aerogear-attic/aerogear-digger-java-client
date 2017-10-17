@@ -115,6 +115,34 @@ public class BuildService {
     }
 
     /**
+     *
+     * @param jenkinsServer Jenkins server client
+     * @param jobName name of the job
+     * @param params build parameters to override defaults in the job
+     * @return The QueueReference
+     * @throws IOException if connection problems occur during connecting to Jenkins
+     * @throws InterruptedException if a problem occurs during sleeping between checks
+     */
+    public BuildTriggerStatus triggerBuild(JenkinsServer jenkinsServer, String jobName, Map<String, String> params) throws IOException, InterruptedException {
+        LOG.debug("Getting QueueReference for Job '{}'", jobName);
+        QueueReference queueReference = null;
+        JobWithDetails job = jenkinsServer.getJob(jobName);
+        if (job == null) {
+            LOG.debug("Unable to find job for name '{}'", jobName);
+            throw new IllegalArgumentException("Unable to find job for name '" + jobName + "'");
+        } else {
+            queueReference = MapUtils.isEmpty(params) ? job.build() : job.build(params);
+            if (queueReference == null) {
+                // this is probably an implementation problem we have here
+                LOG.debug("Queue reference cannot be null!");
+                throw new IllegalStateException("Queue reference cannot be null!");
+            }
+            LOG.debug("Queue item reference: {}", queueReference.getQueueItemUrlPart());
+            return new BuildTriggerStatus(BuildTriggerStatus.State.TRIGGERED, job.getNextBuildNumber(), queueReference);
+        }
+    }
+
+    /**
      * See the documentation in {@link DiggerClient#build(String, long, Map)}
      *
      * @param jenkinsServer Jenkins server client
@@ -126,24 +154,10 @@ public class BuildService {
      * @throws InterruptedException if a problem occurs during sleeping between checks
      * @see DiggerClient#build(String, long, Map)
      */
-    public BuildTriggerStatus build(JenkinsServer jenkinsServer, String jobName, long timeout, Map<String, String> params) throws IOException, InterruptedException {
+    public BuildTriggerStatus pollBuild(JenkinsServer jenkinsServer, String jobName, QueueReference queueReference, long timeout, Map<String, String> params) throws IOException, InterruptedException {
         final long whenToTimeout = System.currentTimeMillis() + timeout;
-
         LOG.debug("Going to build job with name: {}", jobName);
         LOG.debug("Going to timeout in {} msecs if build didn't start executing", timeout);
-
-        JobWithDetails job = jenkinsServer.getJob(jobName);
-        if (job == null) {
-            LOG.debug("Unable to find job for name '{}'", jobName);
-            throw new IllegalArgumentException("Unable to find job for name '" + jobName + "'");
-        }
-
-        final QueueReference queueReference = MapUtils.isEmpty(params) ? job.build() : job.build(params);
-        if (queueReference == null) {
-            // this is probably an implementation problem we have here
-            LOG.debug("Queue reference cannot be null!");
-            throw new IllegalStateException("Queue reference cannot be null!");
-        }
         LOG.debug("Build triggered; queue item reference: {}", queueReference.getQueueItemUrlPart());
 
         // wait for N seconds, then fetch the queue item.
@@ -168,10 +182,10 @@ public class BuildService {
 
             if (queueItem.isCancelled()) {
                 LOG.debug("Queue item is cancelled. Returning CANCELLED_IN_QUEUE");
-                return new BuildTriggerStatus(BuildTriggerStatus.State.CANCELLED_IN_QUEUE, -1);
+                return new BuildTriggerStatus(BuildTriggerStatus.State.CANCELLED_IN_QUEUE, -1, queueReference);
             } else if (queueItem.isStuck()) {
                 LOG.debug("Queue item is stuck. Returning STUCK_IN_QUEUE");
-                return new BuildTriggerStatus(BuildTriggerStatus.State.STUCK_IN_QUEUE, -1);
+                return new BuildTriggerStatus(BuildTriggerStatus.State.STUCK_IN_QUEUE, -1, queueReference);
             }
 
             // do not return -1 if blocked.
@@ -181,7 +195,7 @@ public class BuildService {
 
             if (executable != null) {
                 LOG.debug("Build has an executable. Returning build number: {}", executable.getNumber());
-                return new BuildTriggerStatus(BuildTriggerStatus.State.STARTED_BUILDING, executable.getNumber().intValue());
+                return new BuildTriggerStatus(BuildTriggerStatus.State.STARTED_BUILDING, executable.getNumber().intValue(), queueReference);
             } else {
                 LOG.debug("Build did not start executing yet.");
                 if (whenToTimeout > System.currentTimeMillis()) {
@@ -189,7 +203,7 @@ public class BuildService {
                     Thread.sleep(pollPeriod);
                 } else {
                     LOG.debug("Timeout period has exceeded. Returning TIMED_OUT.");
-                    return new BuildTriggerStatus(BuildTriggerStatus.State.TIMED_OUT, -1);
+                    return new BuildTriggerStatus(BuildTriggerStatus.State.TIMED_OUT, -1, queueReference);
                 }
             }
         }
@@ -207,7 +221,8 @@ public class BuildService {
      * @see DiggerClient#build(String, long)
      */
     public BuildTriggerStatus build(JenkinsServer jenkinsServer, String jobName, long timeout) throws IOException, InterruptedException {
-        return this.build(jenkinsServer, jobName, timeout, null);
+        BuildTriggerStatus buildTriggerStatus = this.triggerBuild(jenkinsServer, jobName, null);
+        return this.pollBuild(jenkinsServer, jobName, buildTriggerStatus.getQueueReference(), timeout, null);
     }
 
     /**
