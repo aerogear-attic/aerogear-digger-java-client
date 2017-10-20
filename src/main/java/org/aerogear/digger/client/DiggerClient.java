@@ -18,6 +18,7 @@ package org.aerogear.digger.client;
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.BuildWithDetails;
 import com.offbytwo.jenkins.model.JobWithDetails;
+import com.offbytwo.jenkins.model.QueueReference;
 import com.offbytwo.jenkins.model.credentials.Credential;
 import org.aerogear.digger.client.model.BuildDiscarder;
 import org.aerogear.digger.client.model.BuildTriggerStatus;
@@ -250,7 +251,8 @@ public class DiggerClient {
      */
     public BuildTriggerStatus build(String jobName, long timeout, Map<String, String> params) throws DiggerClientException {
         try {
-            return buildService.build(this.jenkinsServer, jobName, timeout, params);
+            BuildTriggerStatus buildTriggerStatus = buildService.triggerBuild(this.jenkinsServer, jobName, params);
+            return buildService.pollBuild(this.jenkinsServer, jobName, buildTriggerStatus.getQueueReference(),timeout, params);
         } catch (IOException e) {
             LOG.debug("Exception while connecting to Jenkins", e);
             throw new DiggerClientException(e);
@@ -277,6 +279,32 @@ public class DiggerClient {
      */
     public BuildTriggerStatus build(String jobName, long timeout) throws DiggerClientException {
         return this.build(jobName, timeout, Collections.<String, String>emptyMap());
+    }
+
+    /**
+     * Triggers a build for the given job. Unlike {@link #build(String, long, Map)}, this method returns immediately with the build status, which also has a queue reference in it to track the build
+     * @param jobName name of the job
+     * @param params build parameters to be sent to the Jenkins build
+     * @return The QueueReference
+     * @throws IOException if connection problems occur during connecting to Jenkins
+     * @throws InterruptedException if a problem occurs during sleeping between checks
+     */
+    public BuildTriggerStatus triggerBuild(String jobName, Map<String, String> params) throws IOException, InterruptedException {
+        return buildService.triggerBuild(this.jenkinsServer, jobName, params);
+    }
+
+    /**
+     * This method takes a QueueReference and polls to check if a build goes to the next available executor or gets cancelled or gets stuck on the queue for some other reason.
+     * @param queueReference The queue reference
+     * @param jobName name of the job
+     * @param timeout
+     * @param params build parameters to be sent to the Jenkins build
+     * @return The build status
+     * @throws IOException if connection problems occur during connecting to Jenkins
+     * @throws InterruptedException if a problem occurs during sleeping between checks
+     */
+    public BuildTriggerStatus pollBuild(String jobName, QueueReference queueReference, long timeout, Map<String, String> params) throws IOException, InterruptedException{
+        return buildService.pollBuild(this.jenkinsServer, jobName, queueReference, timeout, params);
     }
 
     /**
@@ -397,7 +425,6 @@ public class DiggerClient {
     public BuildWithDetails cancelBuild(String jobName, int buildNumber) throws DiggerClientException, IOException {
         return buildService.cancelBuild(jenkinsServer, jobName, buildNumber);
     }
-
 
     /**
      * Expose the underline Jenkins Server client to allow perform other operations that may not be implemented by the jenkins digger client.

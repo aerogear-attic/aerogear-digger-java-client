@@ -15,6 +15,8 @@
  */
 package org.aerogear.digger.client.model;
 
+import com.offbytwo.jenkins.model.QueueReference;
+
 /**
  * Represents the status of a build that is just triggered.
  * <p>
@@ -47,15 +49,22 @@ public class BuildTriggerStatus {
         /**
          * The build is stuck on Jenkins queue.
          */
-        STUCK_IN_QUEUE
+        STUCK_IN_QUEUE,
+
+        /**
+         * The build is just added to the Jenkins queue.
+         */
+        TRIGGERED
     }
 
     private final State state;
     private final int buildNumber;
+    private final QueueReference queueReference;
 
-    public BuildTriggerStatus(State state, int buildNumber) {
+    public BuildTriggerStatus(State state, int buildNumber, QueueReference queueReference) {
         this.state = state;
         this.buildNumber = buildNumber;
+        this.queueReference = queueReference;
     }
 
     /**
@@ -73,6 +82,10 @@ public class BuildTriggerStatus {
      */
     public int getBuildNumber() {
         return buildNumber;
+    }
+
+    public QueueReference getQueueReference() {
+        return queueReference;
     }
 
     @Override
