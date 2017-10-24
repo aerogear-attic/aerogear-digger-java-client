@@ -20,6 +20,7 @@ import com.offbytwo.jenkins.model.BuildWithDetails;
 import com.offbytwo.jenkins.model.JobWithDetails;
 import com.offbytwo.jenkins.model.QueueReference;
 import com.offbytwo.jenkins.model.credentials.Credential;
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import org.aerogear.digger.client.model.BuildDiscarder;
 import org.aerogear.digger.client.model.BuildTriggerStatus;
 import org.aerogear.digger.client.model.BuildParameter;
@@ -286,11 +287,21 @@ public class DiggerClient {
      * @param jobName name of the job
      * @param params build parameters to be sent to the Jenkins build
      * @return The QueueReference
-     * @throws IOException if connection problems occur during connecting to Jenkins
-     * @throws InterruptedException if a problem occurs during sleeping between checks
+     * @throws DiggerClientException if connection problems occur during connecting to Jenkins
      */
-    public BuildTriggerStatus triggerBuild(String jobName, Map<String, String> params) throws IOException, InterruptedException {
-        return buildService.triggerBuild(this.jenkinsServer, jobName, params);
+    public BuildTriggerStatus triggerBuild(String jobName, Map<String, String> params) throws DiggerClientException {
+        try{
+            return buildService.triggerBuild(this.jenkinsServer, jobName, params);
+        } catch (IOException e){
+            LOG.debug("Exception while connecting to Jenkins", e);
+            throw new DiggerClientException("Exception while connecting to Jenkins", e);
+        } catch (InterruptedException e){
+            LOG.debug("Exception while waiting on Jenkins", e);
+            throw new DiggerClientException("Exception while waiting on Jenkins", e);
+        } catch (Throwable e){
+            LOG.debug("Exception while triggering a build", e);
+            throw new DiggerClientException("Exception while triggering a build", e);
+        }
     }
 
     /**
@@ -300,11 +311,21 @@ public class DiggerClient {
      * @param timeout
      * @param params build parameters to be sent to the Jenkins build
      * @return The build status
-     * @throws IOException if connection problems occur during connecting to Jenkins
-     * @throws InterruptedException if a problem occurs during sleeping between checks
+     * @throws DiggerClientException if connection problems occur during connecting to Jenkins
      */
-    public BuildTriggerStatus pollBuild(String jobName, QueueReference queueReference, long timeout, Map<String, String> params) throws IOException, InterruptedException{
-        return buildService.pollBuild(this.jenkinsServer, jobName, queueReference, timeout, params);
+    public BuildTriggerStatus pollBuild(String jobName, QueueReference queueReference, long timeout, Map<String, String> params) throws DiggerClientException {
+        try{
+            return buildService.pollBuild(this.jenkinsServer, jobName, queueReference, timeout, params);
+        } catch (IOException e) {
+            LOG.debug("Exception while connecting to Jenkins", e);
+            throw new DiggerClientException("Exception while connecting to Jenkins", e);
+        } catch (InterruptedException e) {
+            LOG.debug("Exception while waiting on Jenkins", e);
+            throw new DiggerClientException("Exception while waiting on Jenkins", e);
+        }  catch (Throwable e){
+            LOG.debug("Exception while polling a build", e);
+            throw new DiggerClientException("Exception while polling a build", e);
+        }
     }
 
     /**
@@ -345,8 +366,13 @@ public class DiggerClient {
      * @throws DiggerClientException when problem with fetching artifacts from jenkins
      * @throws IOException           when one of the files cannot be saved
      */
-    public void saveArtifact(String jobName, int buildNumber, String artifactName, File outputFile) throws DiggerClientException, IOException {
-        artifactsService.saveArtifact(jenkinsServer, jobName, buildNumber, artifactName, outputFile);
+    public void saveArtifact(String jobName, int buildNumber, String artifactName, File outputFile) throws DiggerClientException {
+        try{
+            artifactsService.saveArtifact(jenkinsServer, jobName, buildNumber, artifactName, outputFile);
+        } catch (IOException e) {
+            LOG.debug("Exception while saving a file", e);
+            throw new DiggerClientException("Exception while saving a file", e);
+        }
     }
 
     /**
@@ -357,8 +383,13 @@ public class DiggerClient {
      * @return String with file contents that can be saved or piped to socket
      * @throws DiggerClientException when problem with fetching artifacts from jenkins
      */
-    public String getBuildLogs(String jobName, int buildNumber) throws DiggerClientException, IOException {
-        return buildService.getBuildLogs(jenkinsServer, jobName, buildNumber);
+    public String getBuildLogs(String jobName, int buildNumber) throws DiggerClientException {
+        try {
+            return buildService.getBuildLogs(jenkinsServer, jobName, buildNumber);
+        } catch (IOException e) {
+            LOG.debug("Exception while retrieving logs", e);
+            throw new DiggerClientException("Exception while retrieving logs", e);
+        }
     }
 
     /**
@@ -384,8 +415,16 @@ public class DiggerClient {
      * @throws InterruptedException
      * @throws IOException
      */
-    public void streamLogs(String jobName, int buildNumber, LogStreamingOptions options) throws DiggerClientException, InterruptedException, IOException {
-        buildService.streamBuildLogs(jenkinsServer, jobName, buildNumber, options);
+    public void streamLogs(String jobName, int buildNumber, LogStreamingOptions options) throws DiggerClientException {
+        try{
+            buildService.streamBuildLogs(jenkinsServer, jobName, buildNumber, options);
+        } catch (InterruptedException e) {
+            LOG.debug("Exception while waiting", e);
+            throw new DiggerClientException("Exception while waiting", e);
+        } catch (IOException e) {
+            LOG.debug("Exception while streaming logs", e);
+            throw new DiggerClientException("Exception while streaming logs", e);
+        }
     }
 
     /**
@@ -411,8 +450,13 @@ public class DiggerClient {
      * @return the build details
      * @throws DiggerClientException
      */
-    public BuildWithDetails getBuildDetails(String jobName, int buildNumber) throws DiggerClientException, IOException {
-        return buildService.getBuildDetails(jenkinsServer, jobName, buildNumber);
+    public BuildWithDetails getBuildDetails(String jobName, int buildNumber) throws DiggerClientException {
+        try {
+            return buildService.getBuildDetails(jenkinsServer, jobName, buildNumber);
+        } catch (IOException e) {
+            LOG.debug("Exception while connecting to Jenkins", e);
+            throw new DiggerClientException("Exception while connecting to Jenkins", e);
+        }
     }
 
     /**
@@ -422,8 +466,13 @@ public class DiggerClient {
      * @param buildNumber the build number
      * @throws DiggerClientException
      */
-    public BuildWithDetails cancelBuild(String jobName, int buildNumber) throws DiggerClientException, IOException {
-        return buildService.cancelBuild(jenkinsServer, jobName, buildNumber);
+    public BuildWithDetails cancelBuild(String jobName, int buildNumber) throws DiggerClientException {
+        try {
+            return buildService.cancelBuild(jenkinsServer, jobName, buildNumber);
+        } catch (IOException e) {
+            LOG.debug("Exception while connecting to Jenkins", e);
+            throw new DiggerClientException("Exception while connecting to Jenkinss", e);
+        }
     }
 
     /**
