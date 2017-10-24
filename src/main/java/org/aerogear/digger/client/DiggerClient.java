@@ -20,7 +20,6 @@ import com.offbytwo.jenkins.model.BuildWithDetails;
 import com.offbytwo.jenkins.model.JobWithDetails;
 import com.offbytwo.jenkins.model.QueueReference;
 import com.offbytwo.jenkins.model.credentials.Credential;
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import org.aerogear.digger.client.model.BuildDiscarder;
 import org.aerogear.digger.client.model.BuildTriggerStatus;
 import org.aerogear.digger.client.model.BuildParameter;
