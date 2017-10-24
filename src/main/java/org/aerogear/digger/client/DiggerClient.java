@@ -363,7 +363,6 @@ public class DiggerClient {
      * @param artifactName name of the artifact to fetch - can be regexp for example *.apk
      * @param outputFile   file (location) used to save artifact
      * @throws DiggerClientException when problem with fetching artifacts from jenkins
-     * @throws IOException           when one of the files cannot be saved
      */
     public void saveArtifact(String jobName, int buildNumber, String artifactName, File outputFile) throws DiggerClientException {
         try{
@@ -411,8 +410,6 @@ public class DiggerClient {
      * @param buildNumber the build number
      * @param options See {@link LogStreamingOptions}
      * @throws DiggerClientException
-     * @throws InterruptedException
-     * @throws IOException
      */
     public void streamLogs(String jobName, int buildNumber, LogStreamingOptions options) throws DiggerClientException {
         try{
