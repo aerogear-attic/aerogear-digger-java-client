@@ -16,9 +16,9 @@
     </parent>
 
     <scm>
-        <connection>scm:git:git://github.com/aerogear/digger-java.git</connection>
-        <developerConnection>scm:git:git@github.com:aerogear/digger-java.git</developerConnection>
-        <url>https://github.com/aerogear/digger-java</url>
+        <connection>scm:git:git://github.com/aerogear/aerogear-digger-java-client.git</connection>
+        <developerConnection>scm:git:git@github.com:aerogear/aerogear-digger-java-client.git</developerConnection>
+        <url>https://github.com/aerogear/aerogear-digger-java-client</url>
         <tag>HEAD</tag>
     </scm>
 
@@ -29,7 +29,7 @@
 
     <ciManagement>
         <system>travis-ci</system>
-        <url>https://travis-ci.org/aerogear/digger-java</url>
+        <url>https://travis-ci.org/aerogear/aerogear-digger-java-client</url>
     </ciManagement>
 
     <dependencies>
